@@ -268,6 +268,9 @@
                 //リサイズしない
                 $('#fileuri').val(e.target.result.replace(/^.*,/, ''));
                 sendOCR();
+                if(file.type === 'application/pdf'){
+                    $('#imageDisplay').attr('src', 'assets/pdf.svg');
+                }
             }
             else{
                 // 画像リサイズ処理
