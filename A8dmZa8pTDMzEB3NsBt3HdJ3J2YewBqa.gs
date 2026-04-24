@@ -9,6 +9,11 @@ function doGet(e) {
 }
 
 function doPost(e) {
+  // OCRアクション
+  if (e.parameters.action == 'ocr') {
+    return handleOCR(e);
+  }
+
   //エラーチェック
   const check = checkParameters(e.parameters);
   if (check !== ''){
@@ -112,6 +117,67 @@ function checkParameters(params){
 //自身の格納されているフォルダーIDを取得
 function getMyFolderId(){
   return DriveApp.getFileById(ScriptApp.getScriptId()).getParents().next().getId();
+}
+
+// 画像からOCRでテキストを抽出し、日付・金額を返す
+function handleOCR(e) {
+  if (!e.parameters.password || e.parameters.password != SEC.PASSWORD) {
+    return message('ERROR: password_incorrect');
+  }
+  if (!e.parameters.fileuri || !e.parameters.filetype) {
+    return message('ERROR: no_required');
+  }
+
+  try {
+    const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
+    const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
+    const resource = { title: 'ocr_temp', mimeType: MimeType.GOOGLE_DOCS };
+    const file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja' });
+    const text = DocumentApp.openById(file.id).getBody().getText();
+    DriveApp.getFileById(file.id).setTrashed(true);
+
+    return ContentService.createTextOutput(
+      JSON.stringify({ result: 'ok', price: extractPrice(text), date: extractDate(text) })
+    ).setMimeType(ContentService.MimeType.JSON);
+  } catch(ex) {
+    return message('ERROR: ocr_failed(' + ex + ')');
+  }
+}
+
+function extractPrice(text) {
+  // 合計・お会計・TOTALに続く金額を優先
+  const patterns = [
+    /合[計税][^\d\n]*([1-9][0-9,]+)/,
+    /お会計[^\d\n]*([1-9][0-9,]+)/,
+    /TOTAL[^\d\n]*([1-9][0-9,]+)/i,
+    /[¥￥]\s*([1-9][0-9,]+)/
+  ];
+  for (const p of patterns) {
+    const m = text.match(p);
+    if (m) {
+      const n = parseInt(m[1].replace(/,/g, ''));
+      if (n > 0 && n < 100000) return String(n);
+    }
+  }
+  // フォールバック: テキスト中の最大金額
+  const amounts = [...text.matchAll(/([1-9][0-9,]{2,})/g)]
+    .map(m => parseInt(m[1].replace(/,/g, '')))
+    .filter(n => n > 0 && n < 100000);
+  return amounts.length > 0 ? String(Math.max(...amounts)) : '';
+}
+
+function extractDate(text) {
+  // 西暦 (YYYY/MM/DD, YYYY-MM-DD, YYYY年MM月DD日)
+  const western = text.match(/(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/);
+  if (western && parseInt(western[1]) >= 2000) {
+    return `${western[1]}-${western[2].padStart(2,'0')}-${western[3].padStart(2,'0')}`;
+  }
+  // 令和
+  const reiwa = text.match(/令和\s*(\d+)\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})/);
+  if (reiwa) {
+    return `${2018 + parseInt(reiwa[1])}-${reiwa[2].padStart(2,'0')}-${reiwa[3].padStart(2,'0')}`;
+  }
+  return '';
 }
 
 //メッセージの生成 JSON
