@@ -138,7 +138,7 @@ function handleOCR(e) {
       'https://www.googleapis.com/drive/v3/files/' + file.id + '/export?mimeType=text/plain',
       { headers: { Authorization: 'Bearer ' + token } }
     );
-    const text = res.getContentText();
+    const text = normalizeOCRText(res.getContentText());
     DriveApp.getFileById(file.id).setTrashed(true);
 
     return ContentService.createTextOutput(
@@ -162,6 +162,14 @@ function insertWithOCR(resource, blob, maxRetries = 3) {
       throw ex;
     }
   }
+}
+
+function normalizeOCRText(text) {
+  return text
+    .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
+    .replace(/[，]/g, ',')
+    .replace(/(\d)[\s　]+(\d)/g, '$1$2')
+    .replace(/　/g, ' ');
 }
 
 function extractPrice(text) {
@@ -188,7 +196,7 @@ function extractPrice(text) {
 
 function extractDate(text) {
   // 西暦 (YYYY/MM/DD, YYYY-MM-DD, YYYY年MM月DD日)
-  const western = text.match(/(\d{4})[\/\-年](\d{1,2})[\/\-月](\d{1,2})/);
+  const western = text.match(/(\d{4})\s*[\/\-年]\s*(\d{1,2})\s*[\/\-月]\s*(\d{1,2})/);
   if (western && parseInt(western[1]) >= 2000) {
     return `${western[1]}-${western[2].padStart(2,'0')}-${western[3].padStart(2,'0')}`;
   }
