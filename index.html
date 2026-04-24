@@ -242,6 +242,7 @@
       const CONF = {
         DEPLOY_ID: 'AKfycbw6DhFdeqjNh85-oKD5dMznZYwsHnHY88MWPO2Ya8bOX7kRzfQAYRGtGIdoDSbpA5NbpQ'
       }
+      let ocrXhr = null;
       $(function () {
         //フォームを初期化
         initForm();
@@ -371,6 +372,7 @@
 
       //入力フォームを初期化
       function initForm(){
+        if (ocrXhr) { ocrXhr.abort(); ocrXhr = null; }
         //日付の初期値をセット
         const today = new Date();
         const jst = new Date(today.getTime() + 9 * 60 * 60 * 1000);
@@ -404,11 +406,11 @@
         formData.append('fileuri', fileuri);
         formData.append('filetype', filetype);
 
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec');
-        xhr.onload = () => {
+        ocrXhr = new XMLHttpRequest();
+        ocrXhr.open('POST', 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec');
+        ocrXhr.onload = () => {
           try {
-            const res = JSON.parse(xhr.responseText);
+            const res = JSON.parse(ocrXhr.responseText);
             console.log('OCR response:', res);
             if (res.result === 'ok') {
               const filled = [];
@@ -423,14 +425,14 @@
               $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR失敗: ' + res.result);
             }
           } catch(e) {
-            console.error('OCR parse error:', e, xhr.responseText);
+            console.error('OCR parse error:', e, ocrXhr.responseText);
             $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR応答エラー');
           }
         };
-        xhr.onerror = () => {
+        ocrXhr.onerror = () => {
           $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR通信エラー');
         };
-        xhr.send(formData);
+        ocrXhr.send(formData);
       }
 
       //フォーム入力可/不可切替
