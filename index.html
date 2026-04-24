@@ -197,6 +197,7 @@
       .ocr_status.processing { color: #97abc3; }
       .ocr_status.done { color: #4a9a4a; }
       .ocr_status.failed { color: #aaa; }
+      #imageDisplay.is-pdf { width: 150px; }
 
       /* セレクト */
       .cp_select {
@@ -269,7 +270,7 @@
                 $('#fileuri').val(e.target.result.replace(/^.*,/, ''));
                 sendOCR();
                 if(file.type === 'application/pdf'){
-                    $('#imageDisplay').attr('src', 'assets/pdf.svg');
+                    $('#imageDisplay').attr('src', 'assets/pdf.svg').addClass('is-pdf');
                 }
             }
             else{
@@ -380,7 +381,7 @@
         $('#fileuri').val('');
         $('#filename').val('');
         $('#ocr_status').removeClass().addClass('ocr_status').text('');
-        $('#imageDisplay').attr('src', 'assets/blank.png');
+        $('#imageDisplay').removeClass('is-pdf').attr('src', 'assets/blank.png');
       }
 
 
@@ -465,7 +466,6 @@
           <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
           <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
           <div id="ocr_status" class="ocr_status"></div>
-          <img id="imageDisplay" src="assets/blank.png" alt="Image Preview" width="100%">
 
           <div class="cp_sparater"></div>
           <input type="text" name="date" id="date" class="cp_input">
@@ -494,6 +494,7 @@
           <a href="JavaScript:initForm();"><small>クリアする</small></a><br><br>
           <input type="hidden" name="fileuri" id="fileuri">
           <input type="hidden" name="filetype" id="filetype">
+          <img id="imageDisplay" src="assets/blank.png" alt="Image Preview" width="100%">
         </form>
       </div>
     </main>
