@@ -373,10 +373,7 @@
       //入力フォームを初期化
       function initForm(){
         if (ocrXhr) { ocrXhr.abort(); ocrXhr = null; }
-        //日付の初期値をセット
-        const today = new Date();
-        const jst = new Date(today.getTime() + 9 * 60 * 60 * 1000);
-        $('#date').val(jst.toISOString().substring(0, 10));
+        $('#date').val('');
         $('#preset').val('');
         $('#memo').val('');
         $('#price').val('');
