@@ -389,7 +389,11 @@
         const password = $('input[name="password"]').val();
         const fileuri = $('#fileuri').val();
         const filetype = $('#filetype').val();
-        if (!password || !fileuri) return;
+        if (!password) {
+          $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCRにはパスワードが必要です');
+          return;
+        }
+        if (!fileuri) return;
 
         $('#ocr_status').removeClass().addClass('ocr_status processing').text('OCR処理中...');
 
