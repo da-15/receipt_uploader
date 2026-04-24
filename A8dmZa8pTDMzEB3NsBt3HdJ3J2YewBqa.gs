@@ -131,8 +131,8 @@ function handleOCR(e) {
   try {
     const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
-    const resource = { title: 'ocr_temp', mimeType: MimeType.GOOGLE_DOCS };
-    const file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja' });
+    const resource = { title: 'ocr_temp' };
+    const file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja', convert: true });
     const text = DocumentApp.openById(file.id).getBody().getText();
     DriveApp.getFileById(file.id).setTrashed(true);
 
