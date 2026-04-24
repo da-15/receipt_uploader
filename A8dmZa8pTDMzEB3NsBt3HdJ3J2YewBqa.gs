@@ -132,7 +132,7 @@ function handleOCR(e) {
     const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
     const resource = { title: 'ocr_temp' };
-    const file = Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja', convert: true });
+    const file = insertWithOCR(resource, blob);
     const text = DocumentApp.openById(file.id).getBody().getText();
     DriveApp.getFileById(file.id).setTrashed(true);
 
@@ -141,6 +141,21 @@ function handleOCR(e) {
     ).setMimeType(ContentService.MimeType.JSON);
   } catch(ex) {
     return message('ERROR: ocr_failed(' + ex + ')');
+  }
+}
+
+// レート制限に対してエクスポネンシャルバックオフでリトライ
+function insertWithOCR(resource, blob, maxRetries = 3) {
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja', convert: true });
+    } catch(ex) {
+      if (i < maxRetries - 1 && ex.toString().includes('rate limit')) {
+        Utilities.sleep(Math.pow(2, i) * 2000); // 2s, 4s, 8s
+        continue;
+      }
+      throw ex;
+    }
   }
 }
 
