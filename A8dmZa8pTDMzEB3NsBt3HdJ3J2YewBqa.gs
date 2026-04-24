@@ -128,24 +128,26 @@ function handleOCR(e) {
     return message('ERROR: no_required');
   }
 
+  let file = null;
   try {
     const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
-    const resource = { title: 'ocr_temp' };
-    const file = insertWithOCR(resource, blob);
+    const folderId = getMyFolderId();
+    const resource = { title: 'ocr_temp', parents: [{ id: folderId }] };
+    file = insertWithOCR(resource, blob);
     const token = ScriptApp.getOAuthToken();
     const res = UrlFetchApp.fetch(
       'https://www.googleapis.com/drive/v3/files/' + file.id + '/export?mimeType=text/plain',
       { headers: { Authorization: 'Bearer ' + token } }
     );
     const text = normalizeOCRText(res.getContentText());
-    DriveApp.getFileById(file.id).setTrashed(true);
-
     return ContentService.createTextOutput(
       JSON.stringify({ result: 'ok', price: extractPrice(text), date: extractDate(text) })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch(ex) {
     return message('ERROR: ocr_failed(' + ex + ')');
+  } finally {
+    if (file) DriveApp.getFileById(file.id).setTrashed(true);
   }
 }
 
