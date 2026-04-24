@@ -300,7 +300,15 @@
                     // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
                     let resized_image_data = canvas.toDataURL(file.type);
                     $('#fileuri').val(resized_image_data.replace(/^.*,/, ''));
-                    sendOCR();
+
+                    // OCR用に1000px以下の別画像を生成（転送サイズ削減）
+                    const OCR_SIZE = 1000;
+                    const ocrScale = Math.min(OCR_SIZE / width, OCR_SIZE / height, 1);
+                    const ocrCanvas = document.createElement('canvas');
+                    ocrCanvas.width  = Math.round(width  * ocrScale);
+                    ocrCanvas.height = Math.round(height * ocrScale);
+                    ocrCanvas.getContext('2d').drawImage(img, 0, 0, ocrCanvas.width, ocrCanvas.height);
+                    sendOCR(ocrCanvas.toDataURL(file.type).replace(/^.*,/, ''));
                 }
                 img.src = e.target.result;
                 
@@ -385,9 +393,9 @@
 
 
       // 画像選択後にOCRを実行し、日付・金額を自動入力する
-      function sendOCR() {
+      function sendOCR(fileuriOverride) {
         const password = $('input[name="password"]').val();
-        const fileuri = $('#fileuri').val();
+        const fileuri = fileuriOverride || $('#fileuri').val();
         const filetype = $('#filetype').val();
         if (!password) {
           $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCRにはパスワードが必要です');
