@@ -408,6 +408,7 @@
         xhr.onload = () => {
           try {
             const res = JSON.parse(xhr.responseText);
+            console.log('OCR response:', res);
             if (res.result === 'ok') {
               const filled = [];
               if (res.date)  { $('#date').val(res.date);   filled.push('日付'); }
@@ -417,10 +418,12 @@
                 : 'OCR完了（読み取り不可）';
               $('#ocr_status').removeClass().addClass('ocr_status done').text(msg);
             } else {
-              $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR読み取り不可');
+              console.error('OCR error:', res.result);
+              $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR失敗: ' + res.result);
             }
           } catch(e) {
-            $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR読み取り不可');
+            console.error('OCR parse error:', e, xhr.responseText);
+            $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR応答エラー');
           }
         };
         xhr.onerror = () => {
