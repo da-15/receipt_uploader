@@ -133,7 +133,12 @@ function handleOCR(e) {
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
     const resource = { title: 'ocr_temp' };
     const file = insertWithOCR(resource, blob);
-    const text = DocumentApp.openById(file.id).getBody().getText();
+    const token = ScriptApp.getOAuthToken();
+    const res = UrlFetchApp.fetch(
+      'https://www.googleapis.com/drive/v3/files/' + file.id + '/export?mimeType=text/plain',
+      { headers: { Authorization: 'Bearer ' + token } }
+    );
+    const text = res.getContentText();
     DriveApp.getFileById(file.id).setTrashed(true);
 
     return ContentService.createTextOutput(
