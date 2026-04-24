@@ -186,6 +186,18 @@
         opacity: 1;
       }
 
+      /* OCRステータス */
+      .ocr_status {
+        font-size: 1.3rem;
+        color: #666;
+        margin: -5px 0 5px 0;
+        min-height: 1.8em;
+        text-align: left;
+      }
+      .ocr_status.processing { color: #97abc3; }
+      .ocr_status.done { color: #4a9a4a; }
+      .ocr_status.failed { color: #aaa; }
+
       /* セレクト */
       .cp_select {
         display: inline-flex;
@@ -255,6 +267,7 @@
             if(file.type !== 'image/jpeg' && file.type !== 'image/png'){
                 //リサイズしない
                 $('#fileuri').val(e.target.result.replace(/^.*,/, ''));
+                sendOCR();
             }
             else{
                 // 画像リサイズ処理
@@ -282,6 +295,7 @@
                     // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
                     let resized_image_data = canvas.toDataURL(file.type);
                     $('#fileuri').val(resized_image_data.replace(/^.*,/, ''));
+                    sendOCR();
                 }
                 img.src = e.target.result;
                 
@@ -362,9 +376,51 @@
         $('#price').val('');
         $('#fileuri').val('');
         $('#filename').val('');
+        $('#ocr_status').removeClass().addClass('ocr_status').text('');
         $('#imageDisplay').attr('src', 'assets/blank.png');
       }
 
+
+      // 画像選択後にOCRを実行し、日付・金額を自動入力する
+      function sendOCR() {
+        const password = $('input[name="password"]').val();
+        const fileuri = $('#fileuri').val();
+        const filetype = $('#filetype').val();
+        if (!password || !fileuri) return;
+
+        $('#ocr_status').removeClass().addClass('ocr_status processing').text('OCR処理中...');
+
+        const formData = new FormData();
+        formData.append('action', 'ocr');
+        formData.append('password', password);
+        formData.append('fileuri', fileuri);
+        formData.append('filetype', filetype);
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec');
+        xhr.onload = () => {
+          try {
+            const res = JSON.parse(xhr.responseText);
+            if (res.result === 'ok') {
+              const filled = [];
+              if (res.date)  { $('#date').val(res.date);   filled.push('日付'); }
+              if (res.price) { $('#price').val(res.price); filled.push('金額'); }
+              const msg = filled.length > 0
+                ? `OCR完了（${filled.join('・')}を自動入力）`
+                : 'OCR完了（読み取り不可）';
+              $('#ocr_status').removeClass().addClass('ocr_status done').text(msg);
+            } else {
+              $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR読み取り不可');
+            }
+          } catch(e) {
+            $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR読み取り不可');
+          }
+        };
+        xhr.onerror = () => {
+          $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR通信エラー');
+        };
+        xhr.send(formData);
+      }
 
       //フォーム入力可/不可切替
       function setFormDisabled(lock) {
@@ -413,6 +469,7 @@
           <input type="number" name="price" id="price" class="cp_input" min="1" max="99999" placeholder="価格（税込）を入力してください">
           <div class="cp_sparater"></div>
           <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
+          <div id="ocr_status" class="ocr_status"></div>
           <input type="file" id="fileinput" class="cp_fileinput">
           <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
           <input type="submit" value="アップロードする" id="upload_button" class="cp_button">
