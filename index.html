@@ -460,7 +460,18 @@
           </table>
 
           <div id="result_table" class="result-table"></div>
-          <input type="text" name="date" id="date"  class="cp_input">
+
+          <input type="file" id="fileinput" class="cp_fileinput">
+          <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
+          <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
+          <div id="ocr_status" class="ocr_status"></div>
+          <img id="imageDisplay" src="assets/blank.png" alt="Image Preview" width="100%">
+
+          <div class="cp_sparater"></div>
+          <input type="text" name="date" id="date" class="cp_input">
+          <input type="number" name="price" id="price" class="cp_input" min="1" max="99999" placeholder="価格（税込）を入力してください">
+
+          <div class="cp_sparater"></div>
           <label class="cp_select">
             <select name="preset" id="preset">
                 <option value="">―― 支払先を選択してください ――</option>
@@ -475,23 +486,14 @@
             </select>
           </label>
           <input type="text" name="memo" id="memo" placeholder="支払先の備考を入力してください" class="cp_input">
+
           <div class="cp_sparater"></div>
-          <input type="number" name="price" id="price" class="cp_input" min="1" max="99999" placeholder="価格（税込）を入力してください">
-          <div class="cp_sparater"></div>
-          <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
-          <div id="ocr_status" class="ocr_status"></div>
-          <input type="file" id="fileinput" class="cp_fileinput">
-          <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
           <input type="submit" value="アップロードする" id="upload_button" class="cp_button">
-          <!-- <br>
-          <input type="checkbox" name="noresize" id="noresize">
-          <label for="noresize" class="cp_checkbox">画像をリサイズしない</label>
-          -->
+
           <div class="cp_sparater"></div>
           <a href="JavaScript:initForm();"><small>クリアする</small></a><br><br>
           <input type="hidden" name="fileuri" id="fileuri">
           <input type="hidden" name="filetype" id="filetype">
-          <img id="imageDisplay" src="assets/blank.png" alt="Image Preview" width="100%">
         </form>
       </div>
     </main>
