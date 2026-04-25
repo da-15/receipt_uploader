@@ -170,16 +170,17 @@ function normalizeOCRText(text) {
   return text
     .replace(/[０-９]/g, c => String.fromCharCode(c.charCodeAt(0) - 0xFEE0))
     .replace(/[，]/g, ',')
-    .replace(/(\d)[\s　]+(\d)/g, '$1$2')
+    .replace(/(\d),[ \t　]+(\d)/g, '$1,$2')
+    .replace(/(\d)[ \t　]+(\d)/g, '$1$2')
     .replace(/　/g, ' ');
 }
 
 function extractPrice(text) {
   // 合計・お会計・TOTALに続く金額を優先
   const patterns = [
-    /合[計税][^\d\n]*([1-9][0-9,]+)/,
-    /お会計[^\d\n]*([1-9][0-9,]+)/,
-    /TOTAL[^\d\n]*([1-9][0-9,]+)/i,
+    /合[計税](?:[^\d\n]*\n)?[^\d\n]*([1-9][0-9,]+)/,
+    /お会計(?:[^\d\n]*\n)?[^\d\n]*([1-9][0-9,]+)/,
+    /TOTAL(?:[^\d\n]*\n)?[^\d\n]*([1-9][0-9,]+)/i,
     /[¥￥]\s*([1-9][0-9,]+)/
   ];
   for (const p of patterns) {
