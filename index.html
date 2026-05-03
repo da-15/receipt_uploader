@@ -1,89 +1,113 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
-    <meta charset="UTF-8" >
+    <meta charset="UTF-8" />
     <title>レシートアップローダ</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <link rel="shortcut icon" type="image/png" href="./assets/icon.png">
-    <link rel="apple-touch-icon" href="./assets/apple-touch-icon.png" sizes="180x180">
-    <link rel="icon" type="image/png" href="./assets/android-touch-icon.png" sizes="192x192">
-    <link rel="stylesheet" href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.css">
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans:400,700" rel="stylesheet">
-    <script src="http://code.jquery.com/jquery-latest.js" type="text/javascript"></script>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <link rel="shortcut icon" type="image/png" href="./assets/icon.png" />
+    <link
+      rel="apple-touch-icon"
+      href="./assets/apple-touch-icon.png"
+      sizes="180x180"
+    />
+    <link
+      rel="icon"
+      type="image/png"
+      href="./assets/android-touch-icon.png"
+      sizes="192x192"
+    />
+    <link
+      rel="stylesheet"
+      href="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/base/jquery-ui.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css?family=Open+Sans:400,700"
+      rel="stylesheet"
+    />
+    <script
+      src="http://code.jquery.com/jquery-latest.js"
+      type="text/javascript"
+    ></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>
     <script src="https://ajax.googleapis.com/ajax/libs/jqueryui/1/i18n/jquery.ui.datepicker-ja.min.js"></script>
-    
+
     <style type="text/css">
       html {
         font-size: 62.5%;
       }
       body {
-        font-size: 2.0rem;
+        font-size: 2rem;
         margin: 0px;
         text-align: center;
         color: #333;
-        font-family: "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium", "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
+        font-family:
+          "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium",
+          "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
       }
       a {
         color: #97abc3;
       }
-      header{
-        padding-top:10px;
+      header {
+        padding-top: 10px;
         font-size: 1.3rem;
         font: #979696;
       }
       @media (max-width: 670px) {
         /* スマホ */
         main {
-            margin: 0 auto;
-            width: 100%;
+          margin: 0 auto;
+          width: 100%;
         }
-        .cp_button, .cp_file{
+        .cp_button,
+        .cp_file {
           width: 80%;
         }
       }
       @media (max-width: 1100px) and (min-width: 671px) {
         /* タブレット */
         main {
-            margin: 0 auto;
-            width: 671px;
+          margin: 0 auto;
+          width: 671px;
         }
-        .cp_button, .cp_file{
+        .cp_button,
+        .cp_file {
           width: 380px;
         }
       }
       @media (min-width: 1101px) {
         /* パソコン */
         main {
-            margin: 0 auto;
-            width: 671px;
+          margin: 0 auto;
+          width: 671px;
         }
-        .cp_button, .cp_file{
+        .cp_button,
+        .cp_file {
           width: 380px;
         }
       }
       .cp_contents {
         margin: 20px;
       }
-      .cp_error{
+      .cp_error {
         color: #f00;
         font-weight: bold;
       }
-      .result-table{
+      .result-table {
         min-height: 130px;
-        width:100%;
+        width: 100%;
         border: 3px solid #5c6877;
         border-radius: 1vh;
         margin: 10px 0px 0px 0px;
         padding: 1.2rem 0;
         font-size: 1.8rem;
-        font-family: "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium", "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
+        font-family:
+          "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium",
+          "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
         box-sizing: border-box;
         display: none;
       }
-      .cp_sparater{
+      .cp_sparater {
         height: 10px;
       }
 
@@ -97,29 +121,32 @@
         color: #333;
         border: 1px solid #97abc3;
         border-radius: 1vh;
-        font-size: 2.0rem;
-        font-family: "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium", "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
+        font-size: 2rem;
+        font-family:
+          "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium",
+          "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
         outline: none;
       }
-      .cp_input:read-only{
+      .cp_input:read-only {
         background-color: #dedede;
       }
-      .cp_pass{
+      .cp_pass {
         box-sizing: border-box;
         padding: 0.5rem 1rem;
-        width:120px;
+        width: 120px;
         color: #333;
         border: 1px solid #97abc3;
         border-radius: 1vh;
         font-size: 1.8rem;
-        outline:none;
+        outline: none;
       }
 
       /* ボタン */
-      .cp_fileinput{
+      .cp_fileinput {
         display: none;
       }
-      .cp_button, .cp_file{
+      .cp_button,
+      .cp_file {
         display: inline-block;
         -webkit-appearance: none;
         margin: 5px 0px 10px 0px;
@@ -128,11 +155,13 @@
         border-radius: 5vh;
         border: 0px;
         padding: 1.5rem 0rem;
-        font-size: 2.0rem;
-        font-family: "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium", "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
+        font-size: 2rem;
+        font-family:
+          "Open Sans", "游ゴシック体", YuGothic, "游ゴシック Medium",
+          "Yu Gothic Medium", "游ゴシック", "Yu Gothic", sans-serif;
         outline: none;
       }
-      .cp_button:disabled{
+      .cp_button:disabled {
         background-color: #7d7d7d;
       }
       .cp_button:active {
@@ -145,7 +174,7 @@
         font-size: 1.5rem;
         color: #888;
       }
-      input[type=checkbox] {
+      input[type="checkbox"] {
         display: none;
       }
       .cp_checkbox {
@@ -159,7 +188,7 @@
       .cp_checkbox::before {
         background: #fff;
         border: 1px solid #888;
-        content: '';
+        content: "";
         display: block;
         height: 16px;
         width: 16px;
@@ -171,7 +200,7 @@
       .cp_checkbox::after {
         border-right: 3px solid #97abc3;
         border-bottom: 3px solid #97abc3;
-        content: '';
+        content: "";
         display: block;
         height: 9px;
         left: 10px;
@@ -182,7 +211,7 @@
         transform: rotate(45deg);
         width: 5px;
       }
-      input[type=checkbox]:checked+.cp_checkbox::after {
+      input[type="checkbox"]:checked + .cp_checkbox::after {
         opacity: 1;
       }
 
@@ -194,10 +223,18 @@
         min-height: 1.8em;
         text-align: left;
       }
-      .ocr_status.processing { color: #97abc3; }
-      .ocr_status.done { color: #4a9a4a; }
-      .ocr_status.failed { color: #aaa; }
-      #imageDisplay.is-pdf { width: 150px; }
+      .ocr_status.processing {
+        color: #97abc3;
+      }
+      .ocr_status.done {
+        color: #4a9a4a;
+      }
+      .ocr_status.failed {
+        color: #aaa;
+      }
+      #imageDisplay.is-pdf {
+        width: 150px;
+      }
 
       /* セレクト */
       .cp_select {
@@ -206,42 +243,46 @@
         position: relative;
       }
       .cp_select::after {
-          position: absolute;
-          right: 15px;
-          width: 10px;
-          height: 7px;
-          background-color: #535353;
-          clip-path: polygon(0 0, 100% 0, 50% 100%);
-          content: '';
-          pointer-events: none;
-          margin-top:15px;
+        position: absolute;
+        right: 15px;
+        width: 10px;
+        height: 7px;
+        background-color: #535353;
+        clip-path: polygon(0 0, 100% 0, 50% 100%);
+        content: "";
+        pointer-events: none;
+        margin-top: 15px;
       }
       .cp_select select {
-          appearance: none;
-          min-width: 230px;
-          height: 2.8em;
-          margin-top: 15px;
-          padding: .4em calc(.8em + 30px) .4em .8em;
-          border: 1px solid #97abc3;
-          outline: 0px;
-          border-radius: 1vh;
-          background-color: #fff;
-          color: #333;
-          font-size: 1.7rem;
-          cursor: pointer;
+        appearance: none;
+        min-width: 230px;
+        height: 2.8em;
+        margin-top: 15px;
+        padding: 0.4em calc(0.8em + 30px) 0.4em 0.8em;
+        border: 1px solid #97abc3;
+        outline: 0px;
+        border-radius: 1vh;
+        background-color: #fff;
+        color: #333;
+        font-size: 1.7rem;
+        cursor: pointer;
       }
     </style>
     <script type="text/javascript">
       const MSG = {
         DONE: '完了しました。（出力先: <a href="https://drive.google.com/drive/folders/[replace]" target="_blank">GDrive</a>）<br><img src="./assets/done.png">',
-        WAITING: '処理中...しばらくお待ち下さい。<br><img src="./assets/waiting.gif">',
+        WAITING:
+          '処理中...しばらくお待ち下さい。<br><img src="./assets/waiting.gif">',
         ERROR: '<span class="cp_error">エラーが発生しました。</span><br>',
-        REQUEST_ERROR: '<span class="cp_error">リクエストが失敗しました。</span><br>',
-        REQUIRED_ERROR: '<span class="cp_error">必須項目エラー</span><br>入力されていない項目があります。'
-      }
+        REQUEST_ERROR:
+          '<span class="cp_error">リクエストが失敗しました。</span><br>',
+        REQUIRED_ERROR:
+          '<span class="cp_error">必須項目エラー</span><br>入力されていない項目があります。',
+      };
       const CONF = {
-        DEPLOY_ID: 'AKfycbw6DhFdeqjNh85-oKD5dMznZYwsHnHY88MWPO2Ya8bOX7kRzfQAYRGtGIdoDSbpA5NbpQ'
-      }
+        DEPLOY_ID:
+          "AKfycbw6DhFdeqjNh85-oKD5dMznZYwsHnHY88MWPO2Ya8bOX7kRzfQAYRGtGIdoDSbpA5NbpQ",
+      };
       let ocrXhr = null;
       let ocrTimer = null;
       $(function () {
@@ -249,96 +290,106 @@
         initForm();
 
         // GASウォームアップ（コールドスタート対策）
-        fetch('https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec').catch(() => {});
+        fetch(
+          "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec",
+        ).catch(() => {});
 
         //日付選択ダイアログ
-        $.datepicker.setDefaults($.datepicker.regional['ja']);
-        $('#date').datepicker({ dateFormat: 'yy-mm-dd' });
+        $.datepicker.setDefaults($.datepicker.regional["ja"]);
+        $("#date").datepicker({ dateFormat: "yy-mm-dd" });
 
         //セレクトが選択された
-        $('#preset').on('change', function () {
-            //テンプレート適用
-            $('#memo').val( $('#preset').val());
+        $("#preset").on("change", function () {
+          //テンプレート適用
+          $("#memo").val($("#preset").val());
         });
 
         // 画像選択時にアップロード用情報をセットし、リサイズ処理を行う
-        $('#fileinput').on('change', function () {
-        let file = this.files[0];
-        let fr = new FileReader();
-        fr.onload = function (e) {
+        $("#fileinput").on("change", function () {
+          let file = this.files[0];
+          let fr = new FileReader();
+          fr.onload = function (e) {
             // アップロード用情報をセット
-            $('#filename').val(file.name);
-            $('#filetype').val(file.type);
+            $("#filename").val(file.name);
+            $("#filetype").val(file.type);
 
-            if(file.type !== 'image/jpeg' && file.type !== 'image/png'){
-                //リサイズしない
-                $('#fileuri').val(e.target.result.replace(/^.*,/, ''));
-                sendOCR();
-                if(file.type === 'application/pdf'){
-                    $('#imageDisplay').attr('src', 'assets/pdf.svg').addClass('is-pdf');
+            if (file.type !== "image/jpeg" && file.type !== "image/png") {
+              //リサイズしない
+              $("#fileuri").val(e.target.result.replace(/^.*,/, ""));
+              sendOCR();
+              if (file.type === "application/pdf") {
+                $("#imageDisplay")
+                  .attr("src", "assets/pdf.svg")
+                  .addClass("is-pdf");
+              }
+            } else {
+              // 画像リサイズ処理
+              let img = new Image();
+              img.onload = function () {
+                let canvas = document.createElement("canvas");
+                let ctx = canvas.getContext("2d");
+                let max_size = 2400; // リサイズ後の最大サイズ（横幅・高さの大きい方に合わせる）
+                let width = img.width;
+                let height = img.height;
+                if (width > height) {
+                  if (width > max_size) {
+                    height *= max_size / width;
+                    width = max_size;
+                  }
+                } else {
+                  if (height > max_size) {
+                    width *= max_size / height;
+                    height = max_size;
+                  }
                 }
-            }
-            else{
-                // 画像リサイズ処理
-                let img = new Image();
-                img.onload = function() {
-                    let canvas = document.createElement('canvas');
-                    let ctx = canvas.getContext('2d');
-                    let max_size = 2400; // リサイズ後の最大サイズ（横幅・高さの大きい方に合わせる）
-                    let width = img.width;
-                    let height = img.height;
-                    if (width > height) {
-                        if (width > max_size) {
-                            height *= max_size / width;
-                            width = max_size;
-                        }
-                    } else {
-                        if (height > max_size) {
-                            width *= max_size / height;
-                            height = max_size;
-                        }
-                    }
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.drawImage(img, 0, 0, width, height);
-                    // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
-                    let resized_image_data = canvas.toDataURL(file.type);
-                    $('#fileuri').val(resized_image_data.replace(/^.*,/, ''));
+                canvas.width = width;
+                canvas.height = height;
+                ctx.drawImage(img, 0, 0, width, height);
+                // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
+                let resized_image_data = canvas.toDataURL(file.type);
+                $("#fileuri").val(resized_image_data.replace(/^.*,/, ""));
 
-                    // OCR用に1000px以下の別画像を生成（転送サイズ削減）
-                    const OCR_SIZE = 1000;
-                    const ocrScale = Math.min(OCR_SIZE / width, OCR_SIZE / height, 1);
-                    const ocrCanvas = document.createElement('canvas');
-                    ocrCanvas.width  = Math.round(width  * ocrScale);
-                    ocrCanvas.height = Math.round(height * ocrScale);
-                    ocrCanvas.getContext('2d').drawImage(img, 0, 0, ocrCanvas.width, ocrCanvas.height);
-                    sendOCR(ocrCanvas.toDataURL(file.type).replace(/^.*,/, ''));
-                }
-                img.src = e.target.result;
-                
-                //選択した画像を表示する
-                $('#imageDisplay').attr('src', e.target.result);
+                // OCR用に1000px以下の別画像を生成（転送サイズ削減）
+                const OCR_SIZE = 1000;
+                const ocrScale = Math.min(
+                  OCR_SIZE / width,
+                  OCR_SIZE / height,
+                  1,
+                );
+                const ocrCanvas = document.createElement("canvas");
+                ocrCanvas.width = Math.round(width * ocrScale);
+                ocrCanvas.height = Math.round(height * ocrScale);
+                ocrCanvas
+                  .getContext("2d")
+                  .drawImage(img, 0, 0, ocrCanvas.width, ocrCanvas.height);
+                sendOCR(ocrCanvas.toDataURL(file.type).replace(/^.*,/, ""));
+              };
+              img.src = e.target.result;
+
+              //選択した画像を表示する
+              $("#imageDisplay").attr("src", e.target.result);
             }
-        };
-        fr.readAsDataURL(file);
+          };
+          fr.readAsDataURL(file);
         });
       });
 
       //SUBMITボタン押下時にファイルをアップロードする
-      function sendFile(){
+      function sendFile() {
         //入力チェック
-        if(!checkForm()){
+        if (!checkForm()) {
           return false;
         }
 
         //結果ボックスを表示
-        $('#result_table').css('display','block');
-        $('#result_table').html(MSG.WAITING);
+        $("#result_table").css("display", "block");
+        $("#result_table").html(MSG.WAITING);
 
-        const form = document.querySelector('form');
+        const form = document.querySelector("form");
         const xhr = new XMLHttpRequest();
-        const actionURL = 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec';
-        xhr.open('POST', actionURL);
+        const actionURL =
+          "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec";
+        xhr.open("POST", actionURL);
 
         // フォームデータを取得し、送信する
         const formData = new FormData(form);
@@ -351,15 +402,17 @@
             const res = JSON.parse(xhr.responseText);
             const result = res.result;
 
-            if(result == 'ok'){
-              $('#result_table').html((MSG.DONE).replace('[replace]', res.folderId));
+            if (result == "ok") {
+              $("#result_table").html(
+                MSG.DONE.replace("[replace]", res.folderId),
+              );
               //アップロードファイルをクリア
               initForm();
-            }else{
-              $('#result_table').html(MSG.ERROR + result);
+            } else {
+              $("#result_table").html(MSG.ERROR + result);
             }
           } else {
-            $('#result_table').html(MSG.REQUEST_ERROR + xhr.status);
+            $("#result_table").html(MSG.REQUEST_ERROR + xhr.status);
           }
           setFormDisabled(false);
         };
@@ -368,42 +421,53 @@
       }
 
       //入力フォームの必須チェック
-      function checkForm(){
-        if($('#date').val() == '' || 
-           $('#memo').val() == '' || 
-           $('#fileuri').val() == '' || 
-           $('#price').val() == ''){
-            $('#result_table').css('display','block');
-            $('#result_table').html(MSG.REQUIRED_ERROR);
-            return false;
-        } else{
+      function checkForm() {
+        if (
+          $("#date").val() == "" ||
+          $("#memo").val() == "" ||
+          $("#fileuri").val() == "" ||
+          $("#price").val() == ""
+        ) {
+          $("#result_table").css("display", "block");
+          $("#result_table").html(MSG.REQUIRED_ERROR);
+          return false;
+        } else {
           return true;
         }
       }
 
-
       //入力フォームを初期化
-      function initForm(){
-        if (ocrXhr) { ocrXhr.abort(); ocrXhr = null; }
-        if (ocrTimer) { clearInterval(ocrTimer); ocrTimer = null; }
-        $('#date').val('');
-        $('#preset').val('');
-        $('#memo').val('');
-        $('#price').val('');
-        $('#fileuri').val('');
-        $('#filename').val('');
-        $('#ocr_status').removeClass().addClass('ocr_status').text('');
-        $('#imageDisplay').removeClass('is-pdf').attr('src', 'assets/blank.png');
+      function initForm() {
+        if (ocrXhr) {
+          ocrXhr.abort();
+          ocrXhr = null;
+        }
+        if (ocrTimer) {
+          clearInterval(ocrTimer);
+          ocrTimer = null;
+        }
+        $("#date").val("");
+        $("#preset").val("");
+        $("#memo").val("");
+        $("#price").val("");
+        $("#fileuri").val("");
+        $("#filename").val("");
+        $("#ocr_status").removeClass().addClass("ocr_status").text("");
+        $("#imageDisplay")
+          .removeClass("is-pdf")
+          .attr("src", "assets/blank.png");
       }
-
 
       // 画像選択後にOCRを実行し、日付・金額を自動入力する
       function sendOCR(fileuriOverride) {
         const password = $('input[name="password"]').val();
-        const fileuri = fileuriOverride || $('#fileuri').val();
-        const filetype = $('#filetype').val();
+        const fileuri = fileuriOverride || $("#fileuri").val();
+        const filetype = $("#filetype").val();
         if (!password) {
-          $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCRにはパスワードが必要です');
+          $("#ocr_status")
+            .removeClass()
+            .addClass("ocr_status failed")
+            .text("OCRにはパスワードが必要です");
           return;
         }
         if (!fileuri) return;
@@ -412,61 +476,88 @@
         ocrTimer = setInterval(() => {
           const sec = (Date.now() - ocrStart) / 1000;
           const pct = Math.min(90, Math.round(90 * (1 - Math.exp(-sec / 2))));
-          $('#ocr_status').removeClass().addClass('ocr_status processing').text('OCR処理中... ' + pct + '%');
+          $("#ocr_status")
+            .removeClass()
+            .addClass("ocr_status processing")
+            .text("OCR処理中... " + pct + "%");
         }, 300);
 
         const formData = new FormData();
-        formData.append('action', 'ocr');
-        formData.append('password', password);
-        formData.append('fileuri', fileuri);
-        formData.append('filetype', filetype);
+        formData.append("action", "ocr");
+        formData.append("password", password);
+        formData.append("fileuri", fileuri);
+        formData.append("filetype", filetype);
 
         ocrXhr = new XMLHttpRequest();
-        ocrXhr.open('POST', 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec');
+        ocrXhr.open(
+          "POST",
+          "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec",
+        );
         ocrXhr.onload = () => {
-          clearInterval(ocrTimer); ocrTimer = null;
+          clearInterval(ocrTimer);
+          ocrTimer = null;
           try {
             const res = JSON.parse(ocrXhr.responseText);
-            console.log('OCR response:', res);
-            if (res.result === 'ok') {
+            console.log("OCR response:", res);
+            if (res.result === "ok") {
               const filled = [];
-              if (res.date  && !$('#date').val())  { $('#date').val(res.date);   filled.push('日付'); }
-              if (res.price && !$('#price').val()) { $('#price').val(res.price); filled.push('金額'); }
-              const msg = filled.length > 0
-                ? `OCR完了（${filled.join('・')}を自動入力）`
-                : 'OCR完了（読み取り不可）';
-              $('#ocr_status').removeClass().addClass('ocr_status done').text(msg);
+              if (res.date && !$("#date").val()) {
+                $("#date").val(res.date);
+                filled.push("日付");
+              }
+              if (res.price && !$("#price").val()) {
+                $("#price").val(res.price);
+                filled.push("金額");
+              }
+              const msg =
+                filled.length > 0
+                  ? `OCR完了（${filled.join("・")}を自動入力）`
+                  : "OCR完了（読み取り不可）";
+              $("#ocr_status")
+                .removeClass()
+                .addClass("ocr_status done")
+                .text(msg);
             } else {
-              console.error('OCR error:', res.result);
-              $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR失敗: ' + res.result);
+              console.error("OCR error:", res.result);
+              $("#ocr_status")
+                .removeClass()
+                .addClass("ocr_status failed")
+                .text("OCR失敗: " + res.result);
             }
-          } catch(e) {
-            console.error('OCR parse error:', e, ocrXhr.responseText);
-            $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR応答エラー');
+          } catch (e) {
+            console.error("OCR parse error:", e, ocrXhr.responseText);
+            $("#ocr_status")
+              .removeClass()
+              .addClass("ocr_status failed")
+              .text("OCR応答エラー");
           }
         };
         ocrXhr.onerror = () => {
-          clearInterval(ocrTimer); ocrTimer = null;
-          $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR通信エラー');
+          clearInterval(ocrTimer);
+          ocrTimer = null;
+          $("#ocr_status")
+            .removeClass()
+            .addClass("ocr_status failed")
+            .text("OCR通信エラー");
         };
         ocrXhr.send(formData);
       }
 
       //フォーム入力可/不可切替
       function setFormDisabled(lock) {
-        $('#date').prop('readonly', lock);
-        $('#memo').prop('readonly', lock);
-        $('#price').prop('readonly', lock);
+        $("#date").prop("readonly", lock);
+        $("#memo").prop("readonly", lock);
+        $("#price").prop("readonly", lock);
 
-        $('#preset').prop('disabled', lock);
-        $('#fileinput').prop('disabled', lock);
-        $('#upload_button').prop('disabled', lock);
+        $("#preset").prop("disabled", lock);
+        $("#fileinput").prop("disabled", lock);
+        $("#upload_button").prop("disabled", lock);
       }
     </script>
   </head>
   <body>
     <header>
-      <img src="./assets/icon.png" width="32px"><br>
+      <img src="./assets/icon.png" width="32px" /><br />
       <b>レシートアップローダ</b>
     </header>
     <main class="cat_top">
@@ -475,44 +566,84 @@
           <table width="100%">
             <td align="right">
               <small>pass:</small>
-              <input type="password" name="password" class="cp_pass">
+              <input type="password" name="password" class="cp_pass" />
             </td>
           </table>
 
-          <input type="file" id="fileinput" class="cp_fileinput">
+          <input type="file" id="fileinput" class="cp_fileinput" />
           <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
-          <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
+          <input
+            type="text"
+            id="filename"
+            class="cp_input"
+            placeholder="画像を選択してください"
+            readonly
+          />
           <div id="ocr_status" class="ocr_status"></div>
 
           <div class="cp_sparater"></div>
           <label class="cp_select">
             <select name="preset" id="preset">
-                <option value="">―― 支払先を選択してください ――</option>
-                <option value="TEPCO（●月20日〜●月19日分）">TEPCO</option>
-                <option value="東京水道局（●、●、●月分）">東京水道局</option>
-                <option value="KDDI（●月請求 ●月利用分）">KDDI</option>
-                <option value="GMOインターネット（●月分）">GMOインターネット</option>
-                <option value="Microsoft（Office365 ●月分）">Office365</option>
-                <option value="●（会議費）">会議費</option>
-                <option value="●（交際費）">交際費</option>
-                <option value="">その他</option>
+              <option value="">―― 支払先を選択してください ――</option>
+              <option value="TEPCO（●月20日〜●月19日分）">TEPCO</option>
+              <option value="東京水道局（●、●、●月分）">東京水道局</option>
+              <option value="KDDI（●月請求 ●月利用分）">KDDI</option>
+              <option value="GMOインターネット（●月分）">
+                GMOインターネット
+              </option>
+              <option value="Microsoft（Office365 ●月分）">Office365</option>
+              <option value="●（会議費）">会議費</option>
+              <option value="●（交際費）">交際費</option>
+              <option value="">その他</option>
             </select>
           </label>
-          <input type="text" name="memo" id="memo" placeholder="支払先の備考を入力してください" class="cp_input">
+          <input
+            type="text"
+            name="memo"
+            id="memo"
+            placeholder="支払先の備考を入力してください"
+            class="cp_input"
+          />
 
           <div class="cp_sparater"></div>
-          <input type="text" name="date" id="date" class="cp_input" autocomplete="off" placeholder="領収日を入力してください">
-          <input type="number" name="price" id="price" class="cp_input" min="1" max="99999" placeholder="価格（税込）を入力してください">
+          <input
+            type="text"
+            name="date"
+            id="date"
+            class="cp_input"
+            autocomplete="off"
+            placeholder="領収日を入力してください"
+          />
+          <input
+            type="number"
+            name="price"
+            id="price"
+            class="cp_input"
+            min="1"
+            max="99999"
+            placeholder="価格（税込）を入力してください"
+          />
 
           <div class="cp_sparater"></div>
           <div id="result_table" class="result-table"></div>
-          <input type="submit" value="アップロードする" id="upload_button" class="cp_button">
+          <input
+            type="submit"
+            value="アップロードする"
+            id="upload_button"
+            class="cp_button"
+          />
 
           <div class="cp_sparater"></div>
-          <a href="JavaScript:initForm();"><small>クリアする</small></a><br><br>
-          <input type="hidden" name="fileuri" id="fileuri">
-          <input type="hidden" name="filetype" id="filetype">
-          <img id="imageDisplay" src="assets/blank.png" alt="Image Preview" width="100%">
+          <a href="JavaScript:initForm();"><small>クリアする</small></a
+          ><br /><br />
+          <input type="hidden" name="fileuri" id="fileuri" />
+          <input type="hidden" name="filetype" id="filetype" />
+          <img
+            id="imageDisplay"
+            src="assets/blank.png"
+            alt="Image Preview"
+            width="100%"
+          />
         </form>
       </div>
     </main>
