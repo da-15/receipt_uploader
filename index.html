@@ -430,8 +430,8 @@
             console.log('OCR response:', res);
             if (res.result === 'ok') {
               const filled = [];
-              if (res.date)  { $('#date').val(res.date);   filled.push('日付'); }
-              if (res.price) { $('#price').val(res.price); filled.push('金額'); }
+              if (res.date  && !$('#date').val())  { $('#date').val(res.date);   filled.push('日付'); }
+              if (res.price && !$('#price').val()) { $('#price').val(res.price); filled.push('金額'); }
               const msg = filled.length > 0
                 ? `OCR完了（${filled.join('・')}を自動入力）`
                 : 'OCR完了（読み取り不可）';
