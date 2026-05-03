@@ -243,9 +243,13 @@
         DEPLOY_ID: 'AKfycbw6DhFdeqjNh85-oKD5dMznZYwsHnHY88MWPO2Ya8bOX7kRzfQAYRGtGIdoDSbpA5NbpQ'
       }
       let ocrXhr = null;
+      let ocrTimer = null;
       $(function () {
         //フォームを初期化
         initForm();
+
+        // GASウォームアップ（コールドスタート対策）
+        fetch('https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec').catch(() => {});
 
         //日付選択ダイアログ
         $.datepicker.setDefaults($.datepicker.regional['ja']);
@@ -381,6 +385,7 @@
       //入力フォームを初期化
       function initForm(){
         if (ocrXhr) { ocrXhr.abort(); ocrXhr = null; }
+        if (ocrTimer) { clearInterval(ocrTimer); ocrTimer = null; }
         $('#date').val('');
         $('#preset').val('');
         $('#memo').val('');
@@ -403,7 +408,12 @@
         }
         if (!fileuri) return;
 
-        $('#ocr_status').removeClass().addClass('ocr_status processing').text('OCR処理中...');
+        const ocrStart = Date.now();
+        ocrTimer = setInterval(() => {
+          const sec = (Date.now() - ocrStart) / 1000;
+          const pct = Math.min(90, Math.round(90 * (1 - Math.exp(-sec / 2))));
+          $('#ocr_status').removeClass().addClass('ocr_status processing').text('OCR処理中... ' + pct + '%');
+        }, 300);
 
         const formData = new FormData();
         formData.append('action', 'ocr');
@@ -414,6 +424,7 @@
         ocrXhr = new XMLHttpRequest();
         ocrXhr.open('POST', 'https://script.google.com/macros/s/' + CONF.DEPLOY_ID + '/exec');
         ocrXhr.onload = () => {
+          clearInterval(ocrTimer); ocrTimer = null;
           try {
             const res = JSON.parse(ocrXhr.responseText);
             console.log('OCR response:', res);
@@ -435,6 +446,7 @@
           }
         };
         ocrXhr.onerror = () => {
+          clearInterval(ocrTimer); ocrTimer = null;
           $('#ocr_status').removeClass().addClass('ocr_status failed').text('OCR通信エラー');
         };
         ocrXhr.send(formData);
@@ -467,8 +479,6 @@
             </td>
           </table>
 
-          <div id="result_table" class="result-table"></div>
-
           <input type="file" id="fileinput" class="cp_fileinput">
           <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
           <input type="text" id="filename" class="cp_input" placeholder="画像を選択してください" readonly>
@@ -495,6 +505,7 @@
           <input type="number" name="price" id="price" class="cp_input" min="1" max="99999" placeholder="価格（税込）を入力してください">
 
           <div class="cp_sparater"></div>
+          <div id="result_table" class="result-table"></div>
           <input type="submit" value="アップロードする" id="upload_button" class="cp_button">
 
           <div class="cp_sparater"></div>
