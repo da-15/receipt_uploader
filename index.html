@@ -319,6 +319,16 @@
           if (!file) {
             return;
           }
+          // サーバー側で受け付けない形式は選択時点で弾く（iPhoneのHEIC等）
+          const allowed = ["image/jpeg", "image/png", "application/pdf"];
+          if (!allowed.includes(file.type)) {
+            const status = $id("ocr_status");
+            status.className = "ocr_status failed";
+            status.textContent =
+              "非対応のファイル形式です（" + (file.type || "不明") + "）";
+            this.value = "";
+            return;
+          }
           let fr = new FileReader();
           fr.onload = function (e) {
             // アップロード用情報をセット
@@ -585,7 +595,12 @@
             </td>
           </table>
 
-          <input type="file" id="fileinput" class="cp_fileinput" />
+          <input
+            type="file"
+            id="fileinput"
+            class="cp_fileinput"
+            accept="image/jpeg,image/png,application/pdf"
+          />
           <label for="fileinput" class="cp_file">ファイル選択/撮影</label>
           <input
             type="text"
