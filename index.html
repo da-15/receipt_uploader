@@ -399,7 +399,7 @@
               const renderAndSend = function (source, srcWidth, srcHeight) {
                 let canvas = document.createElement("canvas");
                 let ctx = canvas.getContext("2d");
-                let max_size = 2400; // リサイズ後の最大サイズ（横幅・高さの大きい方に合わせる）
+                let max_size = 2000; // リサイズ後の最大サイズ（横幅・高さの大きい方に合わせる）
                 let width = srcWidth;
                 let height = srcHeight;
                 if (width > height) {
@@ -417,8 +417,8 @@
                 canvas.height = height;
                 ctx.drawImage(source, 0, 0, width, height);
                 // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
-                // JPEG品質0.8で約700KB程度を想定（品質指定はPNGでは無視される）
-                let resized_image_data = canvas.toDataURL(file.type, 0.8);
+                // 2000px・JPEG品質0.75で約700KBを想定（品質指定はPNGでは無視される）
+                let resized_image_data = canvas.toDataURL(file.type, 0.75);
                 $id("fileuri").value = resized_image_data.replace(/^.*,/, "");
 
                 // OCR用に1000px以下の別画像を生成（転送サイズ削減）
