@@ -149,16 +149,31 @@
         background-color: #ececec;
       }
       /* iOS Safariは空のdate inputに何も表示せず、placeholder属性も無視するため、
-         iOS限定で疑似要素によりプレースホルダー文言を表示する */
+         iOS限定でプレースホルダー文言を入力欄に重ねて表示する */
+      .cp_date_wrap {
+        display: block;
+        position: relative;
+        margin: 0;
+      }
+      .cp_date_placeholder {
+        display: none;
+      }
       @supports (-webkit-touch-callout: none) {
         input[type="date"].cp_input {
           display: flex;
           align-items: center;
           text-align: left;
         }
-        input[type="date"].is-empty::before {
-          content: attr(placeholder);
+        #date.is-empty + .cp_date_placeholder {
+          display: block;
+          position: absolute;
+          left: calc(1.3rem + 1px);
+          top: 50%;
+          transform: translateY(-50%);
           color: #9b9b9b;
+          font-size: 2rem;
+          letter-spacing: 1px;
+          pointer-events: none;
         }
       }
       .cp_pass {
@@ -660,14 +675,16 @@
           />
 
           <div class="cp_sparater"></div>
-          <input
-            type="date"
-            name="date"
-            id="date"
-            class="cp_input is-empty"
-            autocomplete="off"
-            placeholder="領収日を入力してください"
-          />
+          <label class="cp_date_wrap">
+            <input
+              type="date"
+              name="date"
+              id="date"
+              class="cp_input is-empty"
+              autocomplete="off"
+            />
+            <span class="cp_date_placeholder">領収日</span>
+          </label>
           <input
             type="number"
             name="price"
@@ -675,7 +692,7 @@
             class="cp_input"
             min="1"
             max="99999"
-            placeholder="価格（税込）を入力する"
+            placeholder="価格（税込）"
           />
 
           <div class="cp_sparater"></div>
