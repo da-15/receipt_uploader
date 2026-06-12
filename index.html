@@ -417,7 +417,8 @@
                 canvas.height = height;
                 ctx.drawImage(source, 0, 0, width, height);
                 // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
-                let resized_image_data = canvas.toDataURL(file.type);
+                // JPEG品質0.8で約700KB程度を想定（品質指定はPNGでは無視される）
+                let resized_image_data = canvas.toDataURL(file.type, 0.8);
                 $id("fileuri").value = resized_image_data.replace(/^.*,/, "");
 
                 // OCR用に1000px以下の別画像を生成（転送サイズ削減）
@@ -433,7 +434,9 @@
                 ocrCanvas
                   .getContext("2d")
                   .drawImage(source, 0, 0, ocrCanvas.width, ocrCanvas.height);
-                sendOCR(ocrCanvas.toDataURL(file.type).replace(/^.*,/, ""));
+                sendOCR(
+                  ocrCanvas.toDataURL(file.type, 0.8).replace(/^.*,/, ""),
+                );
 
                 //選択した画像（リサイズ後）を表示する
                 $id("imageDisplay").src = resized_image_data;
