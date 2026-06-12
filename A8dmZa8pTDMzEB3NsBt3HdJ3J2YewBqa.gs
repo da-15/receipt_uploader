@@ -180,7 +180,13 @@ function handleOCR(e) {
     console.log('ocr text(' + text.length + '): ' + text.slice(0, 1000));
     console.log('extracted date=' + extractDate(text) + ' price=' + extractPrice(text));
     return ContentService.createTextOutput(
-      JSON.stringify({ result: 'ok', price: extractPrice(text), date: extractDate(text) })
+      JSON.stringify({
+        result: 'ok',
+        price: extractPrice(text),
+        date: extractDate(text),
+        //デバッグ用: OCR結果テキスト（原因究明が終わったら削除する）
+        debug_text: text.slice(0, 1000)
+      })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch(ex) {
     //詳細はログにのみ残し、クライアントには返さない
