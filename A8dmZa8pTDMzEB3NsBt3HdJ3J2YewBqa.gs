@@ -1,6 +1,5 @@
 'use strict';
 const CONF = {
-  RESIZE: 2500,
   AUTH_MAX_ATTEMPTS: 10,   //認証失敗の許容回数
   AUTH_LOCKOUT_SEC: 600    //ロックアウト時間（秒）
 }
@@ -48,14 +47,7 @@ function doPost(e) {
     const blob = Utilities.newBlob(data, e.parameters.filetype, filename);
     
     //アップロードされたファイルをDriveに保存
-    const originalFile = DriveApp.getFolderById(folderId).createFile(blob);
-    const fileId = originalFile.getId();
-
-    //リサイズしないチェックボックスの判定
-    if(!e.parameters.noresize || e.parameters.noresize != 'on'){
-      //指定サイズより大きい場合にリサイズ
-      resizeImage(fileId, folderId, CONF.RESIZE);
-    }
+    DriveApp.getFolderById(folderId).createFile(blob);
   }
   catch(ex){
     //詳細はログにのみ残し、クライアントには返さない
@@ -64,38 +56,6 @@ function doPost(e) {
   }
 
   return message('ok', folderId);
-}
-
-
-//縦横比がsize内におさまるように、画像jpg、pngのリサイズをする。
-function resizeImage(fileId, outputFolderId, resize) {
-  // ファイルを取得
-  const file = DriveApp.getFileById(fileId); 
-
-  //ファイルタイプの判定
-  const mimeType = file.getMimeType();
-  if(mimeType != 'image/jpeg' && mimeType != 'image/png'){
-    //jpgでもpngでもない場合は何もしない
-    return;
-  }
-  
-  //getSizeメソッド実行
-  let fileSize = ImgApp.getSize(file.getBlob());
-  const width = fileSize.width;
-  const height = fileSize.height;
-  
-  // リサイズする必要があるかどうかを判定
-  if (width > resize || height > resize) {
-    // 縮小倍率を計算
-    const scale = Math.min(resize / width, resize / height);
-    const res = ImgApp.doResize(fileId, parseInt(width * scale));
-
-    //リサイズ後のファイルを保存
-    DriveApp.getFolderById(outputFolderId).createFile(res.blob.setName(file.getName()));
-    
-    //元ファイルを削除（ごみ箱へ移動）
-    file.setTrashed(true);
-  }
 }
 
 
