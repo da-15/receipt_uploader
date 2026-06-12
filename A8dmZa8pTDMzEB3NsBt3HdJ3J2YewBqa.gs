@@ -163,7 +163,12 @@ function handleOCR(e) {
     const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
     const folderId = getMyFolderId();
-    const resource = { title: 'ocr_temp', parents: [{ id: folderId }] };
+    //Googleドキュメントに変換することでOCRが実行される（Drive API v3）
+    const resource = {
+      name: 'ocr_temp',
+      mimeType: 'application/vnd.google-apps.document',
+      parents: [folderId]
+    };
     file = insertWithOCR(resource, blob);
     const token = ScriptApp.getOAuthToken();
     const res = UrlFetchApp.fetch(
@@ -187,7 +192,7 @@ function handleOCR(e) {
 function insertWithOCR(resource, blob, maxRetries = 3) {
   for (let i = 0; i < maxRetries; i++) {
     try {
-      return Drive.Files.insert(resource, blob, { ocr: true, ocrLanguage: 'ja', convert: true });
+      return Drive.Files.create(resource, blob, { ocrLanguage: 'ja' });
     } catch(ex) {
       if (i < maxRetries - 1 && ex.toString().includes('rate limit')) {
         Utilities.sleep(Math.pow(2, i) * 2000); // 2s, 4s, 8s

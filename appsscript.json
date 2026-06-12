@@ -13,7 +13,7 @@
     "enabledAdvancedServices": [
       {
         "userSymbol": "Drive",
-        "version": "v2",
+        "version": "v3",
         "serviceId": "drive"
       }
     ]

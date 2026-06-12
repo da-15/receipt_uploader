@@ -28,4 +28,4 @@
 ## 依存ライブラリ（GAS）
 
 - [ImgApp](https://github.com/tanaikech/ImgApp) — サーバーサイドでの画像リサイズに使用
-- Drive API v2（GAS の高度なサービスから有効化）
+- Drive API v3（GAS の高度なサービスから有効化）
