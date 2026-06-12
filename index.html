@@ -559,6 +559,14 @@
           try {
             const res = JSON.parse(ocrXhr.responseText);
             console.log("OCR response:", res);
+            //デバッグ用: OCR結果テキストを画面に表示（原因究明が終わったら削除する）
+            $id("ocr_debug").textContent =
+              "[debug] date=" +
+              (res.date || "(なし)") +
+              " price=" +
+              (res.price || "(なし)") +
+              "\n--- OCRテキスト ---\n" +
+              (res.debug_text || "(空)");
             if (res.result === "ok") {
               const filled = [];
               const skipped = [];
@@ -649,6 +657,17 @@
             readonly
           />
           <div id="ocr_status" class="ocr_status"></div>
+          <!-- デバッグ用: OCR結果テキスト表示（原因究明が終わったら削除する） -->
+          <div
+            id="ocr_debug"
+            style="
+              font-size: 1.1rem;
+              color: #999;
+              text-align: left;
+              white-space: pre-wrap;
+              word-break: break-all;
+            "
+          ></div>
 
           <div class="cp_sparater"></div>
           <label class="cp_select">
