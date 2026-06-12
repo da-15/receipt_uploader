@@ -1,6 +1,8 @@
 'use strict';
 const CONF = {
-  RESIZE: 2500
+  RESIZE: 2500,
+  AUTH_MAX_ATTEMPTS: 10,   //認証失敗の許容回数
+  AUTH_LOCKOUT_SEC: 600    //ロックアウト時間（秒）
 }
 
 function doGet(e) {
@@ -56,7 +58,9 @@ function doPost(e) {
     }
   }
   catch(ex){
-    return message('ERROR: unexpected error(' + ex + ')');
+    //詳細はログにのみ残し、クライアントには返さない
+    console.error('upload failed: ' + ((ex && ex.stack) || ex));
+    return message('ERROR: unexpected_error');
   }
 
   return message('ok', folderId);
@@ -97,20 +101,42 @@ function resizeImage(fileId, outputFolderId, resize) {
 
 //入力されたパラメーターの不正チェック
 function checkParameters(params){
-  if(!params.memo || !params.fileuri || !params.price || !params.password){
+  if(!params.date || !params.memo || !params.fileuri || !params.price || !params.password){
     //パラメーターがセットされていない
     return 'no_required'; //NG
-  }else if(params.password != SEC.PASSWORD){
-    //パスワード違い
-    return 'password_incorrect'; //NG
-  }else if(params.memo == '' || params.fileuri == '' || params.price == ''){
-    return 'no_required'; //NG
-    //パラメーターが空
-  }else if(params.filetype != 'image/jpeg' && params.filetype != 'image/png' && params.filetype != 'application/pdf' ){
+  }
+
+  const auth = checkPassword('' + params.password);
+  if(auth !== ''){
+    return auth; //NG
+  }
+
+  if(!isAllowedFiletype(params.filetype)){
     //ファイルタイプがjpg、png、pdf以外
     return 'illegal_mime_type'; //NG
   }
 
+  return ''; //OK
+}
+
+//許可されたファイルタイプか
+function isAllowedFiletype(filetype){
+  return filetype == 'image/jpeg' || filetype == 'image/png' || filetype == 'application/pdf';
+}
+
+//パスワード認証（総当たり対策つき）
+//一定回数失敗するとロックアウト時間中はすべて拒否する
+function checkPassword(password){
+  const cache = CacheService.getScriptCache();
+  const failed = parseInt(cache.get('auth_failed_count') || '0', 10);
+  if(failed >= CONF.AUTH_MAX_ATTEMPTS){
+    return 'locked_out'; //NG
+  }
+  if(password !== SEC.PASSWORD){
+    cache.put('auth_failed_count', String(failed + 1), CONF.AUTH_LOCKOUT_SEC);
+    return 'password_incorrect'; //NG
+  }
+  cache.remove('auth_failed_count');
   return ''; //OK
 }
 
@@ -121,11 +147,15 @@ function getMyFolderId(){
 
 // 画像からOCRでテキストを抽出し、日付・金額を返す
 function handleOCR(e) {
-  if (!e.parameters.password || e.parameters.password != SEC.PASSWORD) {
-    return message('ERROR: password_incorrect');
+  const auth = checkPassword('' + (e.parameters.password || ''));
+  if (auth !== '') {
+    return message('ERROR: ' + auth);
   }
   if (!e.parameters.fileuri || !e.parameters.filetype) {
     return message('ERROR: no_required');
+  }
+  if (!isAllowedFiletype('' + e.parameters.filetype)) {
+    return message('ERROR: illegal_mime_type');
   }
 
   let file = null;
@@ -145,7 +175,9 @@ function handleOCR(e) {
       JSON.stringify({ result: 'ok', price: extractPrice(text), date: extractDate(text) })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch(ex) {
-    return message('ERROR: ocr_failed(' + ex + ')');
+    //詳細はログにのみ残し、クライアントには返さない
+    console.error('ocr failed: ' + ((ex && ex.stack) || ex));
+    return message('ERROR: ocr_failed');
   } finally {
     if (file) DriveApp.getFileById(file.id).setTrashed(true);
   }
