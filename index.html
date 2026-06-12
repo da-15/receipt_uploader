@@ -154,6 +154,11 @@
       input[type="date"].cp_input {
         text-align: left;
       }
+      /* iOS Safariは日付の値を内部要素に描画するため、本体のtext-alignが効かない */
+      input[type="date"].cp_input::-webkit-date-and-time-value {
+        text-align: left;
+        margin: 0;
+      }
       /* iOS Safariは空のdate inputに何も表示せず、placeholder属性も無視するため、
          iOS限定でプレースホルダー文言を入力欄に重ねて表示する */
       .cp_date_wrap {
