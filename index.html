@@ -148,6 +148,19 @@
       .cp_input:read-only {
         background-color: #ececec;
       }
+      /* iOS Safariは空のdate inputに何も表示せず、placeholder属性も無視するため、
+         iOS限定で疑似要素によりプレースホルダー文言を表示する */
+      @supports (-webkit-touch-callout: none) {
+        input[type="date"].cp_input {
+          display: flex;
+          align-items: center;
+          text-align: left;
+        }
+        input[type="date"].is-empty::before {
+          content: attr(placeholder);
+          color: #9b9b9b;
+        }
+      }
       .cp_pass {
         box-sizing: border-box;
         padding: 0.5rem 1rem;
@@ -288,6 +301,11 @@
         return document.getElementById(id);
       }
 
+      //日付フィールドの空状態クラスを更新する（iOS向けプレースホルダー表示用）
+      function updateDateEmptyState() {
+        $id("date").classList.toggle("is-empty", !$id("date").value);
+      }
+
       //サーバー応答など外部由来の文字列をHTMLに挿入する前にエスケープする
       function escapeHtml(str) {
         return String(str)
@@ -306,6 +324,10 @@
         fetch(
           "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec",
         ).catch(() => {});
+
+        //日付の入力状態を監視（iOS向けプレースホルダー表示用）
+        $id("date").addEventListener("input", updateDateEmptyState);
+        $id("date").addEventListener("change", updateDateEmptyState);
 
         //セレクトが選択された
         $id("preset").addEventListener("change", function () {
@@ -471,6 +493,7 @@
           ocrTimer = null;
         }
         $id("date").value = "";
+        updateDateEmptyState();
         $id("preset").value = "";
         $id("memo").value = "";
         $id("price").value = "";
@@ -527,6 +550,7 @@
               if (res.date) {
                 if (!$id("date").value) {
                   $id("date").value = res.date;
+                  updateDateEmptyState();
                   filled.push("日付");
                 } else skipped.push("日付");
               }
@@ -640,8 +664,9 @@
             type="date"
             name="date"
             id="date"
-            class="cp_input"
+            class="cp_input is-empty"
             autocomplete="off"
+            placeholder="領収日を入力してください"
           />
           <input
             type="number"
