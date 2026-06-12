@@ -85,6 +85,12 @@
         box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
         padding: 20px;
       }
+      /* フィールド間の縦の間隔はここで一括管理する */
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
       .cp_error {
         color: #f00;
         font-weight: bold;
@@ -94,16 +100,12 @@
         width: 100%;
         border: 2px solid var(--border);
         border-radius: var(--radius);
-        margin: 10px 0px 0px 0px;
+        margin: 0;
         padding: 1.2rem 0;
         font-size: 1.8rem;
         box-sizing: border-box;
         display: none;
       }
-      .cp_sparater {
-        height: 10px;
-      }
-
       /* 処理中スピナー */
       .spinner {
         margin: 12px auto 4px auto;
@@ -122,7 +124,7 @@
 
       /* インプット */
       .cp_input {
-        margin: 10px 0px;
+        margin: 0;
         box-sizing: border-box;
         width: 100%;
         height: 6rem;
@@ -147,6 +149,10 @@
       }
       .cp_input:read-only {
         background-color: #ececec;
+      }
+      /* 日付は左寄せで表示する */
+      input[type="date"].cp_input {
+        text-align: left;
       }
       /* iOS Safariは空のdate inputに何も表示せず、placeholder属性も無視するため、
          iOS限定でプレースホルダー文言を入力欄に重ねて表示する */
@@ -201,9 +207,10 @@
       .cp_button,
       .cp_file {
         display: inline-block;
+        align-self: center;
         -webkit-appearance: none;
         appearance: none;
-        margin: 5px 0px 10px 0px;
+        margin: 0;
         color: #fff;
         background-color: var(--accent);
         border-radius: 28px;
@@ -236,7 +243,7 @@
       .ocr_status {
         font-size: 1.3rem;
         color: #666;
-        margin: -5px 0 5px 0;
+        margin: 0;
         min-height: 1.8em;
         text-align: left;
       }
@@ -257,7 +264,7 @@
       .cp_select {
         display: block;
         position: relative;
-        margin: 10px 0px;
+        margin: 0;
       }
       .cp_select::after {
         position: absolute;
@@ -664,12 +671,10 @@
             type="text"
             id="filename"
             class="cp_input"
-            placeholder="---"
+            placeholder="jpg/pdf"
             readonly
           />
           <div id="ocr_status" class="ocr_status"></div>
-
-          <div class="cp_sparater"></div>
           <label class="cp_select">
             <select name="preset" id="preset">
               <option value="">―― 支払先を選択する ――</option>
@@ -692,8 +697,6 @@
             placeholder="支払先の備考を入力する"
             class="cp_input"
           />
-
-          <div class="cp_sparater"></div>
           <label class="cp_date_wrap">
             <input
               type="date"
@@ -713,8 +716,6 @@
             max="99999"
             placeholder="価格（税込）"
           />
-
-          <div class="cp_sparater"></div>
           <div id="result_table" class="result-table"></div>
           <input
             type="submit"
@@ -722,10 +723,7 @@
             id="upload_button"
             class="cp_button"
           />
-
-          <div class="cp_sparater"></div>
-          <a href="JavaScript:initForm();"><small>クリアする</small></a
-          ><br /><br />
+          <a href="JavaScript:initForm();"><small>クリアする</small></a>
           <input type="hidden" name="fileuri" id="fileuri" />
           <input type="hidden" name="filetype" id="filetype" />
           <img
