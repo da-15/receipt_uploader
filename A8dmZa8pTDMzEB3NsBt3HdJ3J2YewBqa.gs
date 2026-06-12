@@ -176,17 +176,8 @@ function handleOCR(e) {
       { headers: { Authorization: 'Bearer ' + token } }
     );
     const text = normalizeOCRText(res.getContentText());
-    //デバッグ用: OCR結果テキストをログに残す（原因究明が終わったら削除する）
-    console.log('ocr text(' + text.length + '): ' + text.slice(0, 1000));
-    console.log('extracted date=' + extractDate(text) + ' price=' + extractPrice(text));
     return ContentService.createTextOutput(
-      JSON.stringify({
-        result: 'ok',
-        price: extractPrice(text),
-        date: extractDate(text),
-        //デバッグ用: OCR結果テキスト（原因究明が終わったら削除する）
-        debug_text: text.slice(0, 1000)
-      })
+      JSON.stringify({ result: 'ok', price: extractPrice(text), date: extractDate(text) })
     ).setMimeType(ContentService.MimeType.JSON);
   } catch(ex) {
     //詳細はログにのみ残し、クライアントには返さない
