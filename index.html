@@ -421,6 +421,8 @@
                   .getContext("2d")
                   .drawImage(img, 0, 0, ocrCanvas.width, ocrCanvas.height);
                 sendOCR(ocrCanvas.toDataURL(file.type).replace(/^.*,/, ""));
+                //デバッグ用: OCRに送った縮小画像をプレビューに表示する（原因究明が終わったら削除する）
+                $id("imageDisplay").src = ocrCanvas.toDataURL(file.type);
               };
               img.src = e.target.result;
 
