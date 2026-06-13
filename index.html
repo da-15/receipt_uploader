@@ -475,7 +475,13 @@
 
       //結果ボックスに内容を表示する
       function setResult(html) {
-        $id("result_table").innerHTML = html;
+        const el = $id("result_table");
+        el.innerHTML = html;
+        // iOS SafariはinnerHTML差し替え後に再描画をサボり、複数行の
+        // 古い表示（2行目以降）が残ることがあるため、強制的に再描画させる
+        el.style.display = "none";
+        void el.offsetHeight;
+        el.style.display = "";
       }
 
       //選択中の支払先に応じてTIPSを結果ボックスに表示する
