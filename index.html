@@ -361,6 +361,8 @@
         $id("preset").addEventListener("change", function () {
           //テンプレート適用
           $id("memo").value = this.value;
+          //選択された支払先のTIPSを表示する
+          updateTips();
         });
 
         // 画像選択時にアップロード用情報をセットし、リサイズ処理を行う
@@ -467,6 +469,22 @@
         });
       });
 
+      //選択中の支払先に応じてTIPSを表示する（未選択時は非表示）
+      function updateTips() {
+        const select = $id("preset");
+        const tip = select.selectedOptions[0]
+          ? select.selectedOptions[0].dataset.tip
+          : "";
+        const tipsTable = $id("tips_table");
+        if (select.selectedIndex > 0 && tip) {
+          tipsTable.innerHTML = "💡 " + escapeHtml(tip);
+          tipsTable.style.display = "block";
+        } else {
+          tipsTable.innerHTML = "";
+          tipsTable.style.display = "none";
+        }
+      }
+
       //SUBMITボタン押下時にファイルをアップロードする
       function sendFile() {
         //入力チェック
@@ -545,6 +563,7 @@
         $id("date").value = "";
         updateDateEmptyState();
         $id("preset").value = "";
+        updateTips();
         $id("memo").value = "";
         $id("price").value = "";
         $id("fileuri").value = "";
@@ -687,18 +706,54 @@
           <label class="cp_select">
             <select name="preset" id="preset">
               <option value="">―― 支払先を選択する ――</option>
-              <option value="TEPCO（●月20日〜●月19日分）">TEPCO</option>
-              <option value="東京水道局（●、●、●月分）">東京水道局</option>
-              <option value="KDDI（●月請求 ●月利用分）">KDDI</option>
-              <option value="GMOインターネット（●月分）">
+              <option
+                value="TEPCO（●月20日〜●月19日分）"
+                data-tip="検針票の請求対象期間（前月20日〜当月19日）を●に記入してください。"
+              >
+                TEPCO
+              </option>
+              <option
+                value="東京水道局（●、●、●月分）"
+                data-tip="水道は2か月分まとめての請求です。対象となる2か月を●に記入してください。"
+              >
+                東京水道局
+              </option>
+              <option
+                value="KDDI（●月請求 ●月利用分）"
+                data-tip="請求月と利用月がずれます。請求書の請求月・利用月をそれぞれ●に記入してください。"
+              >
+                KDDI
+              </option>
+              <option
+                value="GMOインターネット（●月分）"
+                data-tip="サーバー・ドメインの利用月を●に記入してください。"
+              >
                 GMOインターネット
               </option>
-              <option value="Microsoft（Office365 ●月分）">Office365</option>
-              <option value="●（会議費）">会議費</option>
-              <option value="●（交際費）">交際費</option>
-              <option value="">その他</option>
+              <option
+                value="Microsoft（Office365 ●月分）"
+                data-tip="Office365のサブスク利用月を●に記入してください。"
+              >
+                Office365
+              </option>
+              <option
+                value="●（会議費）"
+                data-tip="会議の相手先・目的を●に記入してください。社内打合せの飲食等が対象です。"
+              >
+                会議費
+              </option>
+              <option
+                value="●（交際費）"
+                data-tip="接待・贈答の相手先を●に記入してください。1人あたりの金額にご注意ください。"
+              >
+                交際費
+              </option>
+              <option value="" data-tip="支払先・備考を自由に記入してください。">
+                その他
+              </option>
             </select>
           </label>
+          <div id="tips_table" class="result-table"></div>
           <input
             type="text"
             name="memo"
