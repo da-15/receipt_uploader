@@ -99,13 +99,16 @@
       .result-table {
         min-height: 130px;
         width: 100%;
-        border: 2px solid var(--border);
+        border: 1px solid var(--accent);
         border-radius: var(--radius);
         margin: 0;
-        padding: 1.2rem 0;
+        padding: 1.2rem 1.3rem;
         font-size: 1.8rem;
         box-sizing: border-box;
-        display: none;
+        text-align: center;
+        line-height: 1.5;
+        background-color: #eef2f7;
+        color: var(--text-sub);
       }
       /* 処理中スピナー */
       .spinner {
@@ -310,6 +313,7 @@
     </style>
     <script type="text/javascript">
       const MSG = {
+        DEFAULT: "",
         DONE: '完了しました。（出力先: <a href="https://drive.google.com/drive/folders/[replace]" target="_blank">GDrive</a>）<br><img src="./assets/done.png">',
         WAITING: '処理中...しばらくお待ち下さい。<div class="spinner"></div>',
         ERROR: '<span class="cp_error">エラーが発生しました。</span><br>',
@@ -469,19 +473,21 @@
         });
       });
 
-      //選択中の支払先に応じてTIPSを表示する（未選択時は非表示）
+      //結果ボックスに内容を表示する
+      function setResult(html) {
+        $id("result_table").innerHTML = html;
+      }
+
+      //選択中の支払先に応じてTIPSを結果ボックスに表示する
       function updateTips() {
         const select = $id("preset");
         const tip = select.selectedOptions[0]
           ? select.selectedOptions[0].dataset.tip
           : "";
-        const tipsTable = $id("tips_table");
         if (select.selectedIndex > 0 && tip) {
-          tipsTable.innerHTML = "💡 " + escapeHtml(tip);
-          tipsTable.style.display = "block";
+          setResult("💡 " + escapeHtml(tip));
         } else {
-          tipsTable.innerHTML = "";
-          tipsTable.style.display = "none";
+          setResult(MSG.DEFAULT);
         }
       }
 
@@ -492,10 +498,8 @@
           return false;
         }
 
-        //結果ボックスを表示
-        const resultTable = $id("result_table");
-        resultTable.style.display = "block";
-        resultTable.innerHTML = MSG.WAITING;
+        //結果ボックスに処理中を表示
+        setResult(MSG.WAITING);
 
         const form = document.querySelector("form");
         const xhr = new XMLHttpRequest();
@@ -515,17 +519,19 @@
             const result = res.result;
 
             if (result == "ok") {
-              resultTable.innerHTML = MSG.DONE.replace(
-                "[replace]",
-                encodeURIComponent(String(res.folderId)),
-              );
-              //アップロードファイルをクリア
+              //先にフォームをクリアし、その後に完了メッセージを表示する
               initForm();
+              setResult(
+                MSG.DONE.replace(
+                  "[replace]",
+                  encodeURIComponent(String(res.folderId)),
+                ),
+              );
             } else {
-              resultTable.innerHTML = MSG.ERROR + escapeHtml(result);
+              setResult(MSG.ERROR + escapeHtml(result));
             }
           } else {
-            resultTable.innerHTML = MSG.REQUEST_ERROR + xhr.status;
+            setResult(MSG.REQUEST_ERROR + xhr.status);
           }
           setFormDisabled(false);
         };
@@ -541,9 +547,7 @@
           $id("fileuri").value == "" ||
           $id("price").value == ""
         ) {
-          const resultTable = $id("result_table");
-          resultTable.style.display = "block";
-          resultTable.innerHTML = MSG.REQUIRED_ERROR;
+          setResult(MSG.REQUIRED_ERROR);
           return false;
         } else {
           return true;
@@ -708,52 +712,54 @@
               <option value="">―― 支払先を選択する ――</option>
               <option
                 value="TEPCO（●月20日〜●月19日分）"
-                data-tip="検針票の請求対象期間（前月20日〜当月19日）を●に記入してください。"
+                data-tip="発生日は最終利用月の末日"
               >
                 TEPCO
               </option>
               <option
                 value="東京水道局（●、●、●月分）"
-                data-tip="水道は2か月分まとめての請求です。対象となる2か月を●に記入してください。"
+                data-tip="発生日は最終利用月の末日"
               >
                 東京水道局
               </option>
               <option
                 value="KDDI（●月請求 ●月利用分）"
-                data-tip="請求月と利用月がずれます。請求書の請求月・利用月をそれぞれ●に記入してください。"
+                data-tip="発生日は請求月の末日"
               >
                 KDDI
               </option>
               <option
                 value="GMOインターネット（●月分）"
-                data-tip="サーバー・ドメインの利用月を●に記入してください。"
+                data-tip="発生日は利用月の末日"
               >
                 GMOインターネット
               </option>
               <option
                 value="Microsoft（Office365 ●月分）"
-                data-tip="Office365のサブスク利用月を●に記入してください。"
+                data-tip="発生日は利用月の末日"
               >
                 Office365
               </option>
               <option
                 value="●（会議費）"
-                data-tip="会議の相手先・目的を●に記入してください。社内打合せの飲食等が対象です。"
+                data-tip=""
               >
                 会議費
               </option>
               <option
                 value="●（交際費）"
-                data-tip="接待・贈答の相手先を●に記入してください。1人あたりの金額にご注意ください。"
+                data-tip=""
               >
                 交際費
               </option>
-              <option value="" data-tip="支払先・備考を自由に記入してください。">
+              <option 
+                value="" 
+                data-tip=""
+              >
                 その他
               </option>
             </select>
           </label>
-          <div id="tips_table" class="result-table"></div>
           <input
             type="text"
             name="memo"
