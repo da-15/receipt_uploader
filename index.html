@@ -485,7 +485,8 @@
           ? select.selectedOptions[0].dataset.tip
           : "";
         if (select.selectedIndex > 0 && tip) {
-          setResult("💡 " + escapeHtml(tip));
+          //data-tipは自分たちで管理する静的な値のため、<br>等のタグを活かす
+          setResult("💡 " + tip);
         } else {
           setResult(MSG.DEFAULT);
         }
@@ -712,31 +713,31 @@
               <option value="">―― 支払先を選択する ――</option>
               <option
                 value="TEPCO（●月20日〜●月19日分）"
-                data-tip="発生日は最終利用月の末日"
+                data-tip="発生日は最終利用月の末日<br>利用明細 → 領収情報<br><a href='https://smd.www.kurashi.tepco.co.jp/member/receipt/detail'>[請求書URL]</a>"
               >
                 TEPCO
               </option>
               <option
                 value="東京水道局（●、●、●月分）"
-                data-tip="発生日は最終利用月の末日"
+                data-tip="発生日は最終利用月の末日<br>紙の明細（2ヶ月おき）"
               >
                 東京水道局
               </option>
               <option
                 value="KDDI（●月請求 ●月利用分）"
-                data-tip="発生日は請求月の末日"
+                data-tip="発生日は請求月の末日<br>領収書の保存・印刷 メニュー<br><a href='https://my.au.com/aus/hc-cs/omt/OMT0030001.hc?aa_bid=we-my-top-1062#receipt'>[請求書URL]</a>"
               >
                 KDDI
               </option>
               <option
                 value="GMOインターネット（●月分）"
-                data-tip="発生日は利用月の末日"
+                data-tip="発生日は利用月の末日<br>→請求書を添付（領収書なし）<br><a href='https://navi.gmobb.jp/bb/billhistory'>[請求書URL]</a>"
               >
                 GMOインターネット
               </option>
               <option
                 value="Microsoft（Office365 ●月分）"
-                data-tip="発生日は利用月の末日"
+                data-tip="発生日は利用月の末日<br><a href='https://admin.microsoft.com/Adminportal/Home#/billoverview/invoice-list'>[請求書URL]</a>"
               >
                 Office365
               </option>
