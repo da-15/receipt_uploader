@@ -390,6 +390,8 @@
             // アップロード用情報をセット
             $id("filename").value = file.name;
             $id("filetype").value = file.type;
+            //前回PDFを選んでいた場合のプレビュー幅を戻す
+            $id("imageDisplay").classList.remove("is-pdf");
 
             if (file.type !== "image/jpeg" && file.type !== "image/png") {
               //リサイズしない
@@ -514,15 +516,19 @@
           "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec";
         xhr.open("POST", actionURL);
 
-        // フォームデータを取得し、送信する
-        const formData = new FormData(form);
-        xhr.send(formData);
-        setFormDisabled(true);
-
         // レスポンスが受信された場合の処理
         xhr.onload = () => {
           if (xhr.status === 200) {
-            const res = JSON.parse(xhr.responseText);
+            let res;
+            try {
+              res = JSON.parse(xhr.responseText);
+            } catch (e) {
+              //GASがエラーページ等JSON以外を返した場合
+              console.error("upload parse error:", e, xhr.responseText);
+              setResult(MSG.REQUEST_ERROR + "応答を解析できませんでした");
+              setFormDisabled(false);
+              return;
+            }
             const result = res.result;
 
             if (result == "ok") {
@@ -542,6 +548,16 @@
           }
           setFormDisabled(false);
         };
+        //通信自体が失敗した場合（オフライン等）もフォームを戻す
+        xhr.onerror = () => {
+          setResult(MSG.REQUEST_ERROR + "通信エラー");
+          setFormDisabled(false);
+        };
+
+        // フォームデータを取得し、送信する
+        const formData = new FormData(form);
+        xhr.send(formData);
+        setFormDisabled(true);
         //actionに遷移させない
         return false;
       }
@@ -563,14 +579,7 @@
 
       //入力フォームを初期化
       function initForm() {
-        if (ocrXhr) {
-          ocrXhr.abort();
-          ocrXhr = null;
-        }
-        if (ocrTimer) {
-          clearInterval(ocrTimer);
-          ocrTimer = null;
-        }
+        cancelOCR();
         $id("date").value = "";
         updateDateEmptyState();
         $id("preset").value = "";
@@ -579,6 +588,7 @@
         $id("price").value = "";
         $id("fileuri").value = "";
         $id("filename").value = "";
+        $id("filetype").value = "";
         $id("fileinput").value = "";
         $id("ocr_status").className = "ocr_status";
         $id("ocr_status").textContent = "";
@@ -586,8 +596,22 @@
         $id("imageDisplay").src = "assets/blank.png";
       }
 
+      //実行中のOCRがあれば中断する
+      function cancelOCR() {
+        if (ocrXhr) {
+          ocrXhr.abort();
+          ocrXhr = null;
+        }
+        if (ocrTimer) {
+          clearInterval(ocrTimer);
+          ocrTimer = null;
+        }
+      }
+
       // 画像選択後にOCRを実行し、日付・金額を自動入力する
       function sendOCR(fileuriOverride) {
+        //前のファイルのOCRが残っていると結果や進捗表示が混ざるため中断する
+        cancelOCR();
         const password = document.querySelector('input[name="password"]').value;
         const fileuri = fileuriOverride || $id("fileuri").value;
         const filetype = $id("filetype").value;
@@ -613,16 +637,18 @@
         formData.append("fileuri", fileuri);
         formData.append("filetype", filetype);
 
-        ocrXhr = new XMLHttpRequest();
-        ocrXhr.open(
+        const xhr = new XMLHttpRequest();
+        ocrXhr = xhr;
+        xhr.open(
           "POST",
           "https://script.google.com/macros/s/" + CONF.DEPLOY_ID + "/exec",
         );
-        ocrXhr.onload = () => {
+        xhr.onload = () => {
           clearInterval(ocrTimer);
           ocrTimer = null;
+          ocrXhr = null;
           try {
-            const res = JSON.parse(ocrXhr.responseText);
+            const res = JSON.parse(xhr.responseText);
             console.log("OCR response:", res);
             if (res.result === "ok") {
               const filled = [];
@@ -658,18 +684,19 @@
               status.textContent = "OCR失敗: " + res.result;
             }
           } catch (e) {
-            console.error("OCR parse error:", e, ocrXhr.responseText);
+            console.error("OCR parse error:", e, xhr.responseText);
             status.className = "ocr_status failed";
             status.textContent = "OCR応答エラー";
           }
         };
-        ocrXhr.onerror = () => {
+        xhr.onerror = () => {
           clearInterval(ocrTimer);
           ocrTimer = null;
+          ocrXhr = null;
           status.className = "ocr_status failed";
           status.textContent = "OCR通信エラー";
         };
-        ocrXhr.send(formData);
+        xhr.send(formData);
       }
 
       //フォーム入力可/不可切替

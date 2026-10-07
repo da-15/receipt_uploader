@@ -14,7 +14,8 @@
 
 | ファイル | 役割 |
 |---|---|
-| `index.html` | フロントエンド（フォーム・OCR・アップロード処理） |
+| `docs/index.html` | フロントエンド（フォーム・OCR・アップロード処理） |
+| `docs/assets/` | フロントエンド用の画像 |
 | `*.gs` | Google Apps Script（バックエンド）|
 | `appsscript.json` | GAS プロジェクト設定 |
 
@@ -22,8 +23,8 @@
 
 1. Google Apps Script プロジェクトを作成し、`*.gs` と `appsscript.json` をデプロイする
 2. スクリプトプロパティに `PASSWORD` を設定する（`SEC.PASSWORD` として参照）
-3. `index.html` の `CONF.DEPLOY_ID` をデプロイ ID に書き換える
-4. `index.html` を任意のウェブサーバーまたは GAS の `doGet` で配信する
+3. `docs/index.html` の `CONF.DEPLOY_ID` をデプロイ ID に書き換える
+4. GitHub Pages の公開元を `main` ブランチの `/docs` フォルダに設定する（Settings → Pages）
 
 ## 依存ライブラリ（GAS）
 
