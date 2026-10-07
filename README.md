@@ -16,13 +16,14 @@
 |---|---|
 | `docs/index.html` | フロントエンド（フォーム・OCR・アップロード処理） |
 | `docs/assets/` | フロントエンド用の画像 |
-| `*.gs` | Google Apps Script（バックエンド）|
+| `main.gs` | Google Apps Script（バックエンド：アップロード・OCR・認証）|
+| `secret.gs.sample` | パスワード定義（`SEC`）のサンプル |
 | `appsscript.json` | GAS プロジェクト設定 |
 
 ## セットアップ
 
-1. Google Apps Script プロジェクトを作成し、`*.gs` と `appsscript.json` をデプロイする
-2. スクリプトプロパティに `PASSWORD` を設定する（`SEC.PASSWORD` として参照）
+1. Google Apps Script プロジェクトを作成し、`main.gs` と `appsscript.json` をデプロイする
+2. `secret.gs.sample` を参考に、GAS プロジェクトに `secret.gs` を作成して `SEC.PASSWORD` を設定する（`secret.gs` はリポジトリにコミットしない）
 3. `docs/index.html` の `CONF.DEPLOY_ID` をデプロイ ID に書き換える
 4. GitHub Pages の公開元を `main` ブランチの `/docs` フォルダに設定する（Settings → Pages）
 
