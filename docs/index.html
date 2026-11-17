@@ -16,6 +16,11 @@
       href="./assets/android-touch-icon.png"
       sizes="192x192"
     />
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#97abc3" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-title" content="レシート" />
 
     <style type="text/css">
       :root {
@@ -312,6 +317,13 @@
       }
     </style>
     <script type="text/javascript">
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", function () {
+          navigator.serviceWorker.register("./sw.js").catch(function (err) {
+            console.warn("Service Worker の登録に失敗しました", err);
+          });
+        });
+      }
       const MSG = {
         DEFAULT: "",
         DONE: '完了しました。（出力先: <a href="https://drive.google.com/drive/folders/[replace]" target="_blank">GDrive</a>）<br><img src="./assets/done.png">',
