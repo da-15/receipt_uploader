@@ -274,46 +274,50 @@
         width: 150px;
       }
 
-      /* セレクト */
-      .cp_select {
-        display: block;
-        position: relative;
-        margin: 0;
+      /* 用途ボタン（会議費・交際費・雑費） */
+      .cp_cats {
+        display: flex;
+        gap: 8px;
+        margin: 6px 0 2px;
       }
-      .cp_select::after {
-        position: absolute;
-        right: 15px;
-        top: 50%;
-        margin-top: -3px;
-        width: 10px;
-        height: 7px;
-        background-color: #535353;
-        clip-path: polygon(0 0, 100% 0, 50% 100%);
-        content: "";
-        pointer-events: none;
+      .cp_cats[hidden] {
+        display: none;
       }
-      .cp_select select {
-        appearance: none;
-        -webkit-appearance: none;
-        box-sizing: border-box;
-        width: 100%;
-        height: 6rem;
-        padding: 0 calc(1.3rem + 30px) 0 1.3rem;
+      .cp_cat {
+        flex: 1;
+        height: 3.8rem;
         border: 1px solid var(--border);
-        outline: 0px;
-        border-radius: var(--radius);
+        border-radius: 999px;
         background-color: #fff;
-        color: var(--text);
-        font-size: 2rem;
+        color: var(--text-sub);
+        font-size: 1.5rem;
         font-family: var(--font);
         cursor: pointer;
-        transition:
-          border-color 0.15s,
-          box-shadow 0.15s;
       }
-      .cp_select select:focus {
+      .cp_cat.is-active {
+        background-color: var(--accent);
         border-color: var(--accent);
-        box-shadow: 0 0 0 3px rgba(151, 171, 195, 0.25);
+        color: #fff;
+      }
+      .cp_cat:disabled {
+        opacity: 0.5;
+        cursor: default;
+      }
+
+      /* 請求書の取得先（折りたたみ） */
+      .cp_bills {
+        text-align: left;
+        font-size: 1.4rem;
+        color: var(--text-sub);
+        margin: 0 0 8px;
+      }
+      .cp_bills summary {
+        cursor: pointer;
+      }
+      .cp_bills ul {
+        margin: 6px 0 0;
+        padding-left: 1.6em;
+        line-height: 1.6;
       }
     </style>
     <script type="text/javascript">
@@ -373,13 +377,15 @@
         $id("date").addEventListener("input", updateDateEmptyState);
         $id("date").addEventListener("change", updateDateEmptyState);
 
-        //セレクトが選択された
-        $id("preset").addEventListener("change", function () {
-          //テンプレート適用
-          $id("memo").value = this.value;
-          //選択された支払先のTIPSを表示する
-          updateTips();
+        //用途ボタン・請求書の取得先リストを用意する
+        renderBillLinks();
+        document.querySelectorAll(".cp_cat").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            toggleCategory(this.dataset.cat);
+          });
         });
+        //支払先欄が変わったら、用途ボタンの表示とTIPSを更新する
+        $id("memo").addEventListener("input", updateMemoUI);
 
         // 画像選択時にアップロード用情報をセットし、リサイズ処理を行う
         $id("fileinput").addEventListener("change", function () {
@@ -485,16 +491,97 @@
         el.style.display = "";
       }
 
-      //選択中の支払先に応じてTIPSを結果ボックスに表示する
-      function updateTips() {
-        const select = $id("preset");
-        const tip = select.selectedOptions[0]
-          ? select.selectedOptions[0].dataset.tip
-          : "";
-        if (select.selectedIndex > 0 && tip) {
-          //data-tipは自分たちで管理する静的な値のため、<br>等のタグを活かす
-          setResult("💡 " + tip);
-        } else {
+      //定期の請求書。支払先欄がmatchに当てはまれば請求書とみなす
+      //（OCR側 main.gs の BILL_RULES が入れる支払先と揃えておく）
+      //請求書の支払先には用途（会議費など）を付けないので、用途ボタンを隠す
+      const BILLS = [
+        {
+          name: "TEPCO",
+          match: /^TEPCO/,
+          tip: "発生日は最終利用月の末日",
+          where: "利用明細 → 領収情報",
+          url: "https://smd.www.kurashi.tepco.co.jp/member/receipt/detail",
+        },
+        {
+          name: "東京水道局",
+          match: /^東京水道局/,
+          tip: "発生日は最終利用月の末日",
+          where: "紙の明細（2ヶ月おき）",
+        },
+        {
+          name: "KDDI",
+          match: /^KDDI/,
+          tip: "発生日は請求月の末日",
+          where: "領収書の保存・印刷 メニュー",
+          url: "https://my.au.com/aus/hc-cs/omt/OMT0030001.hc?aa_bid=we-my-top-1062#receipt",
+        },
+        {
+          name: "GMOインターネット",
+          match: /^GMOインターネット/,
+          tip: "発生日は利用月の末日",
+          where: "請求書を添付（領収書なし）",
+          url: "https://navi.gmobb.jp/bb/billhistory",
+        },
+        {
+          name: "Office365",
+          match: /^Microsoft/,
+          tip: "発生日は請求日（年払い）",
+          url: "https://admin.microsoft.com/Adminportal/Home#/billoverview/invoice-list",
+        },
+        {
+          name: "Claude",
+          match: /^Claude/,
+          tip: "ドル建てのため、金額は円に換算して入力",
+        },
+      ];
+      const CATEGORIES = ["会議費", "交際費", "雑費"];
+      const CAT_SUFFIX = new RegExp("（(" + CATEGORIES.join("|") + ")）$");
+
+      //支払先欄に当てはまる請求書（なければnull）
+      function findBill(memo) {
+        return BILLS.find((b) => b.match.test(memo)) || null;
+      }
+
+      //請求書の取得先リストを折りたたみの中に作る
+      function renderBillLinks() {
+        const ul = $id("bill_links");
+        ul.innerHTML = BILLS.filter((b) => b.url || b.where)
+          .map((b) => {
+            const name = b.url
+              ? `<a href="${b.url}" target="_blank" rel="noopener">${b.name}</a>`
+              : b.name;
+            return `<li>${name}${b.where ? "：" + b.where : ""}</li>`;
+          })
+          .join("");
+      }
+
+      //用途ボタンを押した：支払先欄の末尾の（用途）を付け替える。同じものなら外す
+      function toggleCategory(cat) {
+        const memo = $id("memo");
+        const m = memo.value.match(CAT_SUFFIX);
+        const base = memo.value.replace(CAT_SUFFIX, "");
+        memo.value = m && m[1] === cat ? base : base + "（" + cat + "）";
+        //店名が空なら、店名を入れられるよう先頭にカーソルを置く
+        if (!base) {
+          memo.focus();
+          memo.setSelectionRange(0, 0);
+        }
+        updateMemoUI();
+      }
+
+      //支払先欄に応じて、用途ボタンの表示・選択状態とTIPSを更新する
+      function updateMemoUI() {
+        const memo = $id("memo").value;
+        const bill = findBill(memo);
+        $id("cats").hidden = !!bill;
+        const m = memo.match(CAT_SUFFIX);
+        document.querySelectorAll(".cp_cat").forEach(function (btn) {
+          btn.classList.toggle("is-active", !!m && m[1] === btn.dataset.cat);
+        });
+        if (bill && bill.tip) {
+          setResult("💡 " + bill.name + "：" + bill.tip);
+        } else if ($id("result_table").textContent.startsWith("💡")) {
+          //請求書でなくなったら、前のTIPSを消す（完了メッセージ等は残す）
           setResult(MSG.DEFAULT);
         }
       }
@@ -581,9 +668,9 @@
         cancelOCR();
         $id("date").value = "";
         updateDateEmptyState();
-        $id("preset").value = "";
-        updateTips();
         $id("memo").value = "";
+        updateMemoUI();
+        setResult(MSG.DEFAULT);
         $id("price").value = "";
         $id("fileuri").value = "";
         $id("filename").value = "";
@@ -668,6 +755,7 @@
               if (res.memo) {
                 if (!$id("memo").value) {
                   $id("memo").value = res.memo;
+                  updateMemoUI();
                   filled.push("支払先");
                 } else skipped.push("支払先");
               }
@@ -710,7 +798,9 @@
         $id("memo").readOnly = lock;
         $id("price").readOnly = lock;
 
-        $id("preset").disabled = lock;
+        document.querySelectorAll(".cp_cat").forEach(function (btn) {
+          btn.disabled = lock;
+        });
         $id("fileinput").disabled = lock;
         $id("upload_button").disabled = lock;
       }
@@ -731,6 +821,10 @@
             </td>
           </table>
 
+          <details class="cp_bills">
+            <summary>請求書の取得先</summary>
+            <ul id="bill_links"></ul>
+          </details>
           <input
             type="file"
             id="fileinput"
@@ -746,65 +840,6 @@
             readonly
           />
           <div id="ocr_status" class="ocr_status"></div>
-          <label class="cp_select">
-            <select name="preset" id="preset">
-              <option value="">―― 支払先を選択する ――</option>
-              <option
-                value="TEPCO（●月20日〜●月19日分）"
-                data-tip="発生日は最終利用月の末日<br>利用明細 → 領収情報<br><a href='https://smd.www.kurashi.tepco.co.jp/member/receipt/detail'>[請求書URL]</a>"
-              >
-                TEPCO
-              </option>
-              <option
-                value="東京水道局（●、●、●月分）"
-                data-tip="発生日は最終利用月の末日<br>紙の明細（2ヶ月おき）"
-              >
-                東京水道局
-              </option>
-              <option
-                value="KDDI（●月請求 ●月利用分）"
-                data-tip="発生日は請求月の末日<br>領収書の保存・印刷 メニュー<br><a href='https://my.au.com/aus/hc-cs/omt/OMT0030001.hc?aa_bid=we-my-top-1062#receipt'>[請求書URL]</a>"
-              >
-                KDDI
-              </option>
-              <option
-                value="GMOインターネット（●月分）"
-                data-tip="発生日は利用月の末日<br>→請求書を添付（領収書なし）<br><a href='https://navi.gmobb.jp/bb/billhistory'>[請求書URL]</a>"
-              >
-                GMOインターネット
-              </option>
-              <option
-                value="Microsoft（Office365 ●月分）"
-                data-tip="発生日は利用月の末日<br><a href='https://admin.microsoft.com/Adminportal/Home#/billoverview/invoice-list'>[請求書URL]</a>"
-              >
-                Office365
-              </option>
-              <option
-                value="●（会議費）"
-                data-tip=""
-              >
-                会議費
-              </option>
-              <option
-                value="●（交際費）"
-                data-tip=""
-              >
-                交際費
-              </option>
-              <option
-                value="●（雑費）"
-                data-tip=""
-              >
-                雑費
-              </option>
-              <option 
-                value="" 
-                data-tip=""
-              >
-                その他
-              </option>
-            </select>
-          </label>
           <input
             type="text"
             name="memo"
@@ -812,6 +847,11 @@
             placeholder="支払先の備考"
             class="cp_input"
           />
+          <div id="cats" class="cp_cats">
+            <button type="button" class="cp_cat" data-cat="会議費">会議費</button>
+            <button type="button" class="cp_cat" data-cat="交際費">交際費</button>
+            <button type="button" class="cp_cat" data-cat="雑費">雑費</button>
+          </div>
           <label class="cp_date_wrap">
             <input
               type="date"
