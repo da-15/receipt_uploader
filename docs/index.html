@@ -441,22 +441,9 @@
                 let resized_image_data = canvas.toDataURL(file.type, 0.75);
                 $id("fileuri").value = resized_image_data.replace(/^.*,/, "");
 
-                // OCR用に1000px以下の別画像を生成（転送サイズ削減）
-                const OCR_SIZE = 1000;
-                const ocrScale = Math.min(
-                  OCR_SIZE / width,
-                  OCR_SIZE / height,
-                  1,
-                );
-                const ocrCanvas = document.createElement("canvas");
-                ocrCanvas.width = Math.round(width * ocrScale);
-                ocrCanvas.height = Math.round(height * ocrScale);
-                ocrCanvas
-                  .getContext("2d")
-                  .drawImage(source, 0, 0, ocrCanvas.width, ocrCanvas.height);
-                sendOCR(
-                  ocrCanvas.toDataURL(file.type, 0.8).replace(/^.*,/, ""),
-                );
+                // OCRにもアップロード用と同じ画像（最大2000px）を使う
+                // 以前は1000pxに縮小していたが、縦長のレシートでは文字が潰れて読み取り精度が落ちていた
+                sendOCR();
 
                 //選択した画像（リサイズ後）を表示する
                 $id("imageDisplay").src = resized_image_data;
@@ -620,7 +607,7 @@
         }
       }
 
-      // 画像選択後にOCRを実行し、日付・金額を自動入力する
+      // 画像選択後にOCRを実行し、日付・金額・支払先を自動入力する
       function sendOCR(fileuriOverride) {
         //前のファイルのOCRが残っていると結果や進捗表示が混ざるため中断する
         cancelOCR();
@@ -677,6 +664,12 @@
                   $id("price").value = res.price;
                   filled.push("金額");
                 } else skipped.push("金額");
+              }
+              if (res.memo) {
+                if (!$id("memo").value) {
+                  $id("memo").value = res.memo;
+                  filled.push("支払先");
+                } else skipped.push("支払先");
               }
               let msg;
               if (filled.length > 0 && skipped.length > 0) {

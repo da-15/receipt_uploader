@@ -1,7 +1,7 @@
 // アプリ本体（HTML・アイコン）をキャッシュし、電波が弱い場所でも画面をすぐ表示する。
 // アップロード / OCR（script.google.com への通信）はキャッシュせずそのまま通す。
 // アセットを追加・変更したら CACHE_NAME の版数を上げること。
-const CACHE_NAME = "receipt-uploader-v1";
+const CACHE_NAME = "receipt-uploader-v2";
 // HTML の応答をこの時間待っても来なければキャッシュを表示する
 const NAV_TIMEOUT_MS = 3000;
 const PRECACHE = [
