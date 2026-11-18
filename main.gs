@@ -170,7 +170,7 @@ function insertWithOCR(resource, blob, maxRetries = 3) {
 
 //よく行くお店：OCR文字に pattern が含まれていたら、支払先欄に memo を入れる
 const SHOP_MEMOS = [
-  { pattern: /STARBUCKS|スターバックス/i, memo: 'Starbucks（会議費）' },
+  { pattern: /STARBUCKS|スターバックス/i, memo: 'Starbucks（雑費）' },
 ];
 
 //OCR文字から { date: 'YYYY-MM-DD', price: '1234', memo: '支払先欄' } を返す（読めない項目は空文字）
