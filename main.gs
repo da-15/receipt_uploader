@@ -320,19 +320,15 @@ function parseGmo(text) {
   return r;
 }
 
-//Microsoft（Office365）：「Total (including Tax) JPY 1,360」
-//対象月は「billing period 2025/01/01 - 2025/01/31」の終わりの月、なければ「Invoice for activity on 2025/04/10」の月
+//Microsoft（Office365・年払い）：金額は「Total (including Tax) JPY 16,315」
+//日付は「Invoice for activity on 2026/04/10」の日付、支払先は「Microsoft（Office365）」
 function parseMicrosoft(text) {
-  const r = { memo: 'Microsoft（Office365 ●月分）' };
+  const r = { memo: 'Microsoft（Office365）' };
   const price = text.match(/Total\s*\(including Tax\)\s*(?:JPY)?\s*([\d,]+)/i);
   if (price) r.price = amountStr(toInt(price[1]));
-  const period = text.match(/billing period\s*\d{4}\/\d{1,2}\/\d{1,2}\s*-\s*(\d{4})\/(\d{1,2})\/\d{1,2}/i);
-  const activity = text.match(/activity on\s*(\d{4})\/(\d{1,2})\/\d{1,2}/i);
-  const ym = period || activity;
-  if (ym) {
-    r.date = monthEnd(+ym[1], +ym[2]);
-    r.memo = `Microsoft（Office365 ${pad2(ym[2])}月分）`;
-  }
+  const act = text.match(/activity on\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/i)
+    || text.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s*-\s*\d{4}\/\d{1,2}\/\d{1,2}/);
+  if (act) r.date = ymd(+act[1], +act[2], +act[3]);
   return r;
 }
 
