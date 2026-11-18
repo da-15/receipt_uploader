@@ -327,13 +327,12 @@ function parseMicrosoft(text) {
   const price = text.match(/Total\s*\(including Tax\)\s*(?:JPY)?\s*([\d,]+)/i);
   if (price) r.price = amountStr(toInt(price[1]));
   const activity = text.match(/activity on\s*(\d{4})\/(\d{1,2})\/\d{1,2}/i);
-  // 年払い：請求期間が11ヶ月以上 → 「年額」、日付は購入月の末日
-  const span = text.match(/(\d{4})\/(\d{1,2})\/\d{1,2}\s*-\s*(\d{4})\/(\d{1,2})\/\d{1,2}/);
-  if (span && (+span[3] - +span[1]) * 12 + (+span[4] - +span[2]) >= 11) {
-    const y = activity ? +activity[1] : +span[1];
-    const m = activity ? +activity[2] : +span[2];
-    r.date = monthEnd(y, m);
-    r.memo = 'Microsoft（Office365 年額）';
+  // 年払い：請求期間が11ヶ月以上 → 支払先は月なし、日付は請求日（activity on）そのもの
+  const span = text.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s*-\s*(\d{4})\/(\d{1,2})\/\d{1,2}/);
+  if (span && (+span[4] - +span[1]) * 12 + (+span[5] - +span[2]) >= 11) {
+    const act = text.match(/activity on\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/i) || span;
+    r.date = ymd(+act[1], +act[2], +act[3]);
+    r.memo = 'Microsoft（Office365）';
     return r;
   }
   const period = text.match(/billing period\s*\d{4}\/\d{1,2}\/\d{1,2}\s*-\s*(\d{4})\/(\d{1,2})\/\d{1,2}/i);
