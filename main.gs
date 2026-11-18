@@ -181,7 +181,7 @@ function parseReceipt(rawText) {
       const r = rule.parse(text);
       return {
         date: r.date || '',
-        price: r.price || extractPrice(text),
+        price: r.price || (r.noPriceFallback ? '' : extractPrice(text)),
         memo: r.memo || ''
       };
     }
@@ -226,7 +226,8 @@ const BILL_RULES = [
   { name: 'GMO', match: /GMOとくとくBB|GMOインターネット/, parse: parseGmo },
   { name: 'KDDI', match: /KDDIをご利用|KDDI料金|RECEIPT FOR SERVICES/, parse: parseKddi },
   { name: 'Office365', match: /Microsoft/, parse: parseMicrosoft },
-  { name: 'Amazon', match: /Amazon\.co\.jp/, parse: parseAmazon },
+  { name: 'Amazon', match: /amazon\.co\.jp|Amazon\.com, Inc/i, parse: parseAmazon },
+  { name: 'Claude', match: /Anthropic, PBC/, parse: parseAnthropic },
 ];
 
 //TEPCO：「電気料金等領収済みのお知らせ2025年2月」「1月20日〜2月19日」「13,211円 (うち消費税等相当額」
@@ -249,7 +250,7 @@ function parseTokyoWater(text) {
   const r = { memo: '東京水道局（●、●、●月分）' };
   //「令和7年1月分」のうち一番新しいものが今回分の最終月
   let latest = null;
-  for (const m of text.matchAll(/令和?\s*(\d{1,2})\s*年\s*(\d{1,2})\s*月分/g)) {
+  for (const m of text.matchAll(/(?:令和|令|和)\s*(\d{1,2})\s*年\s*(\d{1,2})\s*月分/g)) {
     const y = 2018 + parseInt(m[1], 10), mo = parseInt(m[2], 10);
     if (mo < 1 || mo > 12) continue;
     if (!latest || y * 12 + mo > latest.y * 12 + latest.m) latest = { y: y, m: mo };
@@ -257,7 +258,7 @@ function parseTokyoWater(text) {
   if (latest) r.date = monthEnd(latest.y, latest.m);
 
   //使用期間「7月11日〜9月10日」：最終月が今回分と一致するものを選ぶ
-  const periods = [...text.matchAll(/(\d{1,2})\s*月\s*(\d{1,2})\s*日\s*〜\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g)]
+  const periods = [...text.matchAll(/(\d{1,2})[ \t]*月[ \t]*(\d{1,2})[ \t]*日[ \t]*〜?[ \t]*(\d{1,2})[ \t]*月[ \t]*(\d{1,2})[ \t]*日/g)]
     .map(m => ({ from: parseInt(m[1], 10), to: parseInt(m[3], 10) }))
     .filter(p => p.from >= 1 && p.from <= 12 && p.to >= 1 && p.to <= 12);
   const period = periods.find(p => latest && p.to === latest.m) || periods[periods.length - 1];
@@ -347,10 +348,25 @@ function parseAmazon(text) {
   return r;
 }
 
+//Claude（Anthropic）の領収書：ドル建てなので金額は空欄にする（円換算は手入力）
+//日付は「Date paid April 22, 2026」、なければ「Date of issue」
+function parseAnthropic(text) {
+  const r = { memo: 'Claude', price: '' };
+  const m = text.match(/Date (?:paid|of issue)\s+([A-Z][a-z]+)\s+(\d{1,2}),\s*(\d{4})/);
+  if (m) {
+    const mo = MONTHS_EN.indexOf(m[1].slice(0, 3).toLowerCase()) + 1;
+    if (mo > 0 && isValidDate(+m[3], mo, +m[2])) r.date = ymd(+m[3], mo, +m[2]);
+  }
+  r.noPriceFallback = true;
+  return r;
+}
+const MONTHS_EN = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+
 //---- 汎用ルール（一般のレシート） ----
 
 //金額らしい文字列を1つ取り出す（「19点」「10%」「2名」などは金額扱いしない）
-const AMOUNT_RE = /(?:[¥\\#]\s*)?(\d{1,3}(?:,\d{3})+|\d+)(?!\s*[%点名個本枚日月年時分秒])(\s*円)?/g;
+//「¥5,899外」のように外税の税抜額を示すものも合計ではないので除く
+const AMOUNT_RE = /(?:[¥\\#]\s*)?(\d{1,3}(?:,\d{3})+|\d+)(?![\d,]|\s*[%点名個本枚日月年時分秒外])(\s*円)?/g;
 function amountsInLine(line) {
   const out = [];
   for (const m of line.matchAll(AMOUNT_RE)) {
@@ -359,9 +375,14 @@ function amountsInLine(line) {
   }
   return out;
 }
+//行全体が金額1つだけか（「¥1,234」「¥1,234)」「1,234円」など）
+function lineAmount(line) {
+  const m = line.match(/^[(（]?\s*[¥\\#]?\s*(\d{1,3}(?:,\d{3})+|\d+)\s*円?\s*[)）]?$/);
+  return m ? toInt(m[1]) : null;
+}
 
 const TOTAL_KEYWORDS = [
-  /総合計/, /合計金額/, /(?<![税小])合計(?!点数|\s*\d+\s*点)/, /お支払金額|お支払い金額/, /ご請求額|請求金額/,
+  /総合計/, /合計金額/, /(?<![税小])合[計计](?!点数|\s*\d+\s*点)/, /お支払金額|お支払い金額/, /ご請求額|請求金額/,
   /税込計|税込合計|税込価格計/, /領収金額/, /お会計/, /TOTAL/i, /^\s*計\s*$/
 ];
 
@@ -378,6 +399,17 @@ function extractPrice(text) {
         const row = amountsInLine(lines[i + 1]);
         const col = headers.findIndex(h => kw.test(h));
         if (row.length === headers.length && col >= 0) return amountStr(row[col].value);
+      }
+      //見出しだけの行が何行か続き、その後に金額だけの行が同じ数以上続く場合は、順番で対応させる
+      //（例「10%税抜対象額 / 10%税額 / 合計」の後に「¥300 / ¥30 / ¥330」）
+      if (lines[i].trim() === km[0]) {
+        let s = i, e = i;
+        while (s > 0 && lineAmount(lines[s - 1]) === null && amountsInLine(lines[s - 1]).length === 0) s--;
+        while (e + 1 < lines.length && lineAmount(lines[e + 1]) === null && amountsInLine(lines[e + 1]).length === 0) e++;
+        const labels = e - s + 1;
+        const vals = [];
+        for (let j = e + 1; j < lines.length && lineAmount(lines[j]) !== null; j++) vals.push(lineAmount(lines[j]));
+        if (labels >= 2 && vals.length >= labels && vals[i - s] >= 10) return amountStr(vals[i - s]);
       }
       const rest = [lines[i].slice(km.index + km[0].length)].concat(lines.slice(i + 1, i + 5));
       for (const line of rest) {
@@ -402,21 +434,33 @@ function extractPrice(text) {
 
 function extractDate(text) {
   const cands = [];
+  const thisYear = new Date().getFullYear();
   const push = (y, m, d, idx, len) => {
     y = +y; m = +m; d = +d;
     if (y < 100) y += 2000;
+    //「2026」が「2016」「2006」と読まれることがあるので、ありえない年は下1桁が同じ近い年に直す（優先度は下げる）
+    let fixed = false;
+    if (y < thisYear - 5 || y > thisYear + 1) {
+      const c = Math.floor(thisYear / 10) * 10 + (y % 10);
+      y = c > thisYear + 1 ? c - 10 : c;
+      fixed = true;
+    }
     if (!isValidDate(y, m, d)) return;
     //直後に時刻（12:34 / 12時34分）があれば会計日時とみなして優先する
     const after = text.slice(idx + len, idx + len + 16);
     const hasTime = /^\s*(?:\([^)]{0,3}\)|（[^）]{0,3}）)?\s*\d{1,2}\s*(?::|時)\s*\d{2}/.test(after);
-    cands.push({ date: ymd(y, m, d), idx: idx, hasTime: hasTime });
+    cands.push({ date: ymd(y, m, d), idx: idx, hasTime: hasTime, fixed: fixed });
   };
   for (const m of text.matchAll(/(20\d{2})\s*[\/\-.年]\s*(\d{1,2})\s*[\/\-.月]\s*(\d{1,2})\s*日?/g)) push(m[1], m[2], m[3], m.index, m[0].length);
   for (const m of text.matchAll(/(?<![\d\/])(\d{2})[\/.](\d{1,2})[\/.](\d{1,2})(?![\d\/])/g)) push(m[1], m[2], m[3], m.index, m[0].length);
   for (const m of text.matchAll(/令和\s*(\d{1,2})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/g)) push(2018 + +m[1], m[2], m[3], m.index, m[0].length);
   for (const m of text.matchAll(/R\s*(\d{1,2})[.\/](\d{1,2})[.\/](\d{1,2})/g)) push(2018 + +m[1], m[2], m[3], m.index, m[0].length);
+  for (const m of text.matchAll(/\b([A-Z][a-z]{2})[a-z]*\.?\s+(\d{1,2}),\s*(20\d{2})/g)) {
+    const mo = MONTHS_EN.indexOf(m[1].toLowerCase()) + 1;
+    if (mo > 0) push(m[3], mo, m[2], m.index, m[0].length);
+  }
   //区切りが読めなかった「2025917 19:17」のような日付（時刻が続くときだけ）
-  for (const m of text.matchAll(/(?<!\d)(20\d{2})(\d{3,4})(?!\d)/g)) {
+  for (const m of text.matchAll(/(?<!\d)(20\d{2})[ ]?(\d{3,4})(?!\d)/g)) {
     if (!/^.{0,8}?\d{1,2}:\d{2}/.test(text.slice(m.index + m[0].length, m.index + m[0].length + 16))) continue;
     const md = m[2];
     for (let i = 1; i < md.length; i++) {
@@ -426,7 +470,7 @@ function extractDate(text) {
     }
   }
   if (cands.length === 0) return '';
-  cands.sort((a, b) => (b.hasTime - a.hasTime) || (a.idx - b.idx));
+  cands.sort((a, b) => (a.fixed - b.fixed) || (b.hasTime - a.hasTime) || (a.idx - b.idx));
   return cands[0].date;
 }
 
