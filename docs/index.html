@@ -534,9 +534,10 @@
           tip: "ドル建てのため、金額は円に換算して入力",
           url: "https://claude.ai/settings/billing",
         },
-        //取得先リストに出すだけ（支払先の判定はしない）
         {
           name: "freee",
+          match: /^FREEE/,
+          tip: "発生日は領収書の発行日（年払い）",
           url: "https://accounts.secure.freee.co.jp/company_settings/contracts/A-S00462311/invoices",
         },
       ];
