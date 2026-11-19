@@ -172,6 +172,7 @@ function insertWithOCR(resource, blob, maxRetries = 3) {
 const SHOP_MEMOS = [
   { pattern: /STARBUCKS|スターバックス/i, memo: 'Starbucks（雑費）' },
   { pattern: /MOS\s*BURGER|モスバーガー/i, memo: 'モスバーガー（雑費）' },
+  { pattern: /TULLY.?S|タリーズ/i, memo: 'タリーズコーヒー（雑費）' },
 ];
 
 //OCR文字から { date: 'YYYY-MM-DD', price: '1234', memo: '支払先欄' } を返す（読めない項目は空文字）
