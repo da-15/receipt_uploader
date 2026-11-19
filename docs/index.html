@@ -532,6 +532,13 @@
           name: "Claude",
           match: /^Claude/,
           tip: "ドル建てのため、金額は円に換算して入力",
+          url: "https://claude.ai/settings/billing",
+        },
+        {
+          name: "freee",
+          match: /^FREEE/,
+          tip: "発生日は支払日",
+          url: "https://accounts.secure.freee.co.jp/company_settings/contracts/A-S00462311/invoices",
         },
       ];
       const CATEGORIES = ["会議費", "交際費", "雑費"];
@@ -539,7 +546,7 @@
 
       //支払先欄に当てはまる請求書（なければnull）
       function findBill(memo) {
-        return BILLS.find((b) => b.match.test(memo)) || null;
+        return BILLS.find((b) => b.match && b.match.test(memo)) || null;
       }
 
       //請求書の取得先リストを折りたたみの中に作る
