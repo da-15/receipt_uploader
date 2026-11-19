@@ -101,8 +101,14 @@ function checkPassword(password){
 }
 
 //自身の格納されているフォルダーIDを取得
+//OCRのたびにDriveへ問い合わせると時間がかかるので、6時間キャッシュする
 function getMyFolderId(){
-  return DriveApp.getFileById(ScriptApp.getScriptId()).getParents().next().getId();
+  const cache = CacheService.getScriptCache();
+  const cached = cache.get('myFolderId');
+  if (cached) return cached;
+  const id = DriveApp.getFileById(ScriptApp.getScriptId()).getParents().next().getId();
+  cache.put('myFolderId', id, 21600);
+  return id;
 }
 
 // 画像からOCRでテキストを抽出し、日付・金額・支払先欄を返す
@@ -119,6 +125,7 @@ function handleOCR(e) {
   }
 
   let file = null;
+  const t0 = Date.now();
   try {
     const data = Utilities.base64Decode(e.parameters.fileuri, Utilities.Charset.UTF_8);
     const blob = Utilities.newBlob(data, e.parameters.filetype, 'ocr_temp');
@@ -129,13 +136,18 @@ function handleOCR(e) {
       mimeType: 'application/vnd.google-apps.document',
       parents: [folderId]
     };
+    const t1 = Date.now();
     file = insertWithOCR(resource, blob);
+    const t2 = Date.now();
     const token = ScriptApp.getOAuthToken();
     const res = UrlFetchApp.fetch(
       'https://www.googleapis.com/drive/v3/files/' + file.id + '/export?mimeType=text/plain',
       { headers: { Authorization: 'Bearer ' + token } }
     );
     const parsed = parseReceipt(res.getContentText());
+    //どこで時間がかかっているかを実行ログで確認できるようにする
+    console.log('ocr timing: size=' + Math.round(data.length / 1024) + 'KB prep=' + (t1 - t0) +
+      'ms ocr=' + (t2 - t1) + 'ms export=' + (Date.now() - t2) + 'ms');
     return ContentService.createTextOutput(
       JSON.stringify({ result: 'ok', price: parsed.price, date: parsed.date, memo: parsed.memo })
     ).setMimeType(ContentService.MimeType.JSON);
@@ -144,7 +156,15 @@ function handleOCR(e) {
     console.error('ocr failed: ' + ((ex && ex.stack) || ex));
     return message('ERROR: ocr_failed');
   } finally {
-    if (file) DriveApp.getFileById(file.id).setTrashed(true);
+    //一時ドキュメントは不要なので完全に削除する（ゴミ箱に溜めない・呼び出し1回で済む）
+    if (file) {
+      try {
+        Drive.Files.remove(file.id);
+      } catch(ex) {
+        console.error('ocr temp cleanup failed: ' + ex);
+        try { DriveApp.getFileById(file.id).setTrashed(true); } catch(ex2) {}
+      }
+    }
   }
 }
 
