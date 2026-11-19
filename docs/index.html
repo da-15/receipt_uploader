@@ -441,15 +441,17 @@
                 }
                 canvas.width = width;
                 canvas.height = height;
+                // 縮小時に文字がにじみにくいよう高品質の補間を使う
+                ctx.imageSmoothingQuality = "high";
                 ctx.drawImage(source, 0, 0, width, height);
                 // リサイズ後の画像をbase64形式に変換してアップロード用情報にセット
                 // 2000px・JPEG品質0.75で約700KBを想定（品質指定はPNGでは無視される）
+                // Driveに保存されるのはこの画像（OCR用の縮小は保存には影響しない）
                 let resized_image_data = canvas.toDataURL(file.type, 0.75);
                 $id("fileuri").value = resized_image_data.replace(/^.*,/, "");
 
-                // OCRにもアップロード用と同じ画像（最大2000px）を使う
-                // 以前は1000pxに縮小していたが、縦長のレシートでは文字が潰れて読み取り精度が落ちていた
-                sendOCR();
+                // OCRには保存用よりひと回り小さい画像を送り、送信時間を短くする
+                sendOCR(makeOCRImage(canvas), "image/jpeg");
 
                 //選択した画像（リサイズ後）を表示する
                 $id("imageDisplay").src = resized_image_data;
@@ -701,13 +703,40 @@
         }
       }
 
+      // OCR用の画像を作る（base64、JPEG）
+      // 画素数が OCR_MAX_PIXELS を超えるときだけ縮小する。普通の縦横比の写真なら
+      // 2000x1500 → 1600x1200 程度になり、送るデータ量は半分ほどになる。
+      // 長辺で切ると細長いレシートの文字が潰れるので（以前1000pxで精度が落ちた）、
+      // 画素数で決めて細長い写真はほぼそのまま送る。
+      // 実レシート5枚（タリーズ・モス・サイゼリヤ・しんぱち食堂・東京水道局）で
+      // 1600x1200・品質0.7でも日付・金額・支払先の読み取り結果が2000pxと同じことを確認済み。
+      const OCR_MAX_PIXELS = 1600 * 1200;
+      const OCR_JPEG_QUALITY = 0.7;
+      function makeOCRImage(srcCanvas) {
+        const scale = Math.min(
+          1,
+          Math.sqrt(OCR_MAX_PIXELS / (srcCanvas.width * srcCanvas.height)),
+        );
+        const out = document.createElement("canvas");
+        out.width = Math.round(srcCanvas.width * scale);
+        out.height = Math.round(srcCanvas.height * scale);
+        const octx = out.getContext("2d");
+        // PNG（スクショ等）の透過部分がJPEGで黒くならないよう白で下地を塗る
+        octx.fillStyle = "#fff";
+        octx.fillRect(0, 0, out.width, out.height);
+        octx.imageSmoothingQuality = "high";
+        octx.drawImage(srcCanvas, 0, 0, out.width, out.height);
+        return out.toDataURL("image/jpeg", OCR_JPEG_QUALITY).replace(/^.*,/, "");
+      }
+
       // 画像選択後にOCRを実行し、日付・金額・支払先を自動入力する
-      function sendOCR(fileuriOverride) {
+      // fileuriOverride / filetypeOverride を渡すと、保存用とは別の画像でOCRする
+      function sendOCR(fileuriOverride, filetypeOverride) {
         //前のファイルのOCRが残っていると結果や進捗表示が混ざるため中断する
         cancelOCR();
         const password = document.querySelector('input[name="password"]').value;
         const fileuri = fileuriOverride || $id("fileuri").value;
-        const filetype = $id("filetype").value;
+        const filetype = filetypeOverride || $id("filetype").value;
         const status = $id("ocr_status");
         if (!password) {
           status.className = "ocr_status failed";
