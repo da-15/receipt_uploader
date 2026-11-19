@@ -172,7 +172,6 @@ function insertWithOCR(resource, blob, maxRetries = 3) {
 const SHOP_MEMOS = [
   { pattern: /STARBUCKS|スターバックス/i, memo: 'Starbucks（雑費）' },
   { pattern: /MOS\s*BURGER|モスバーガー/i, memo: 'モスバーガー（雑費）' },
-  { pattern: /freee会計|フリー株式会社/i, memo: 'FREEE（ソフトウェア）' },
 ];
 
 //OCR文字から { date: 'YYYY-MM-DD', price: '1234', memo: '支払先欄' } を返す（読めない項目は空文字）
@@ -230,6 +229,7 @@ const BILL_RULES = [
   { name: 'Office365', match: /Microsoft/, parse: parseMicrosoft },
   { name: 'Amazon', match: /amazon\.co\.jp|Amazon\.com, Inc/i, parse: parseAmazon },
   { name: 'Claude', match: /Anthropic, PBC/, parse: parseAnthropic },
+  { name: 'freee', match: /freee会計|フリー株式会社/i, parse: parseFreee },
 ];
 
 //TEPCO：「電気料金等領収済みのお知らせ2025年2月」「1月20日〜2月19日」「13,211円 (うち消費税等相当額」
@@ -330,6 +330,23 @@ function parseMicrosoft(text) {
   const act = text.match(/activity on\s*(\d{4})\/(\d{1,2})\/(\d{1,2})/i)
     || text.match(/(\d{4})\/(\d{1,2})\/(\d{1,2})\s*-\s*\d{4}\/\d{1,2}\/\d{1,2}/);
   if (act) r.date = ymd(+act[1], +act[2], +act[3]);
+  return r;
+}
+
+//freee（年払い）の領収書：日付は「発行日」、金額は「合計金額」
+//「小計 / 消費税 / 合計金額」の見出しと金額がOCRでばらばらの行に並ぶことがあるので、
+//「小計 + 消費税 = 合計」になる組を探して合計を取る（見つからなければ一番大きい金額）
+function parseFreee(text) {
+  const r = { memo: 'FREEE（ソフトウェア）' };
+  const d = text.match(/発行日\s*(\d{4})\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日/);
+  r.date = d ? ymd(+d[1], +d[2], +d[3]) : extractDate(text);
+  const vals = [];
+  for (const line of text.split('\n')) {
+    for (const a of amountsInLine(line)) if (a.hasYen && a.value > 0) vals.push(a.value);
+  }
+  const uniq = [...new Set(vals)].sort((x, y) => y - x);
+  const total = uniq.find(c => uniq.some(a => a < c && uniq.includes(c - a)));
+  if (total || uniq.length) r.price = amountStr(total || uniq[0]);
   return r;
 }
 
