@@ -274,10 +274,10 @@
         width: 150px;
       }
 
-      /* 用途ボタン（会議費・交際費・雑費） */
+      /* 用途ボタン（会議費・交際費・雑費・旅費） */
       .cp_cats {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         margin: 6px 0 2px;
       }
       .cp_cats[hidden] {
@@ -285,7 +285,10 @@
       }
       .cp_cat {
         flex: 1;
+        min-width: 0;
         height: 3.8rem;
+        padding: 0 4px;
+        white-space: nowrap;
         border: 1px solid var(--border);
         border-radius: 999px;
         background-color: #fff;
@@ -543,7 +546,7 @@
           url: "https://accounts.secure.freee.co.jp/company_settings/contracts/A-S00462311/invoices",
         },
       ];
-      const CATEGORIES = ["会議費", "交際費", "雑費"];
+      const CATEGORIES = ["会議費", "交際費", "雑費", "旅費"];
       const CAT_SUFFIX = new RegExp("（(" + CATEGORIES.join("|") + ")）$");
 
       //支払先欄に当てはまる請求書（なければnull）
@@ -887,6 +890,7 @@
             <button type="button" class="cp_cat" data-cat="会議費">会議費</button>
             <button type="button" class="cp_cat" data-cat="交際費">交際費</button>
             <button type="button" class="cp_cat" data-cat="雑費">雑費</button>
+            <button type="button" class="cp_cat" data-cat="旅費">旅費</button>
           </div>
           <label class="cp_date_wrap">
             <input
